@@ -83,6 +83,9 @@ then
 		fi
 	fi
 
+	#Added
+	set OUTPUT_MODE pwm_out
+
 	if [ $OUTPUT_MODE = uavcan_esc ]
 	then
 		if param compare UAVCAN_ENABLE 0

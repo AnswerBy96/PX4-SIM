@@ -39,6 +39,7 @@ px4_add_romfs_files(
 	AETRFG.main.mix
 	babyshark.main.mix
 	blade130.main.mix
+	boat_diff.main.mix
 	CCPM.main.mix
 	claire.aux.mix
 	claire.main.mix

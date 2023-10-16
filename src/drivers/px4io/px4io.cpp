@@ -485,7 +485,7 @@ int PX4IO::init()
 	}
 
 	/* try to claim the generic PWM output device node as well - it's OK if we fail at this */
-	if (_param_sys_hitl.get() <= 0 && _param_sys_use_io.get() == 1) {
+	if (_param_sys_hitl.get() <= 1 && _param_sys_use_io.get() == 1) {
 		_class_instance = register_class_devname(PWM_OUTPUT_BASE_DEVICE_PATH);
 		_mixing_output.setDriverInstance(_class_instance);
 
@@ -544,7 +544,7 @@ void PX4IO::Run()
 	}
 
 	/* if we have new control data from the ORB, handle it */
-	if (_param_sys_hitl.get() <= 0) {
+	if (_param_sys_hitl.get() <= 1) {
 		_mixing_output.update();
 	}
 
@@ -559,7 +559,7 @@ void PX4IO::Run()
 		io_publish_raw_rc();
 	}
 
-	if (_param_sys_hitl.get() <= 0) {
+	if (_param_sys_hitl.get() <= 1) {
 		/* check updates on uORB topics and handle it */
 		if (_t_actuator_armed.updated()) {
 			io_set_arming_state();
