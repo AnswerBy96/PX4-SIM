@@ -57,6 +57,23 @@ then
 fi
 
 #
+# UGV setup.
+#
+if [ $VEHICLE_TYPE = boat ]
+then
+	if [ $MIXER = none ]
+	then
+		echo "boat mixer undefined"
+	fi
+
+	# Load mixer and configure outputs.
+	. ${R}etc/init.d/rc.interface
+
+	# Start standard UGV apps.
+	. ${R}etc/init.d/rc.boat_apps
+fi
+
+#
 # VTOL setup.
 #
 if [ $VEHICLE_TYPE = vtol ]

@@ -18,6 +18,13 @@
 
 param set-default BAT1_N_CELLS 4
 
+param set-default CA_AIRFRAME 6
+param set-default CA_ROTOR_COUNT 2
+param set-default CA_ROTOR0_PX 0.0
+param set-default CA_ROTOR0_PY 1.0
+param set-default CA_ROTOR1_PX 0.0
+param set-default CA_ROTOR1_PY -1.0
+
 param set-default EKF2_GBIAS_INIT 0.01
 param set-default EKF2_ANGERR_INIT 0.01
 param set-default EKF2_MAG_TYPE 1
@@ -36,7 +43,7 @@ param set-default GND_THR_MAX 0.5
 # This corresponds to a turn angle of pi radians.
 # If a special case is made for differential-drive, this will need to change.
 param set-default GND_MAX_ANG 3.142
-param set-default GND_WHEEL_BASE 0.3
+param set-default GND_WHEEL_BASE 1.0
 
 # TODO: Set to -1.0, to allow reversing. This will require many changes in the codebase
 # to support negative throttle.
@@ -54,12 +61,16 @@ param set-default NAV_ACC_RAD 0.5
 
 # Provide ESC a constant 1500 us pulse, which corresponds to
 # idle on the Roboclaw motor controller on the Aion R1
-param set-default PWM_MAIN_DISARM 1500
+param set-default PWM_MAIN_DISARM 900
 param set-default PWM_MAIN_DIS0 1500
 param set-default PWM_MAIN_DIS1 1500
 param set-default PWM_MAIN_MAX 2000
 param set-default PWM_MAIN_MIN 1000
-
+#
+# PWM Hz - 50 Hz is the normal rate in RC cars, higher rates
+# may damage analog servos.
+#
+set PWM_MAIN_RATE 50
 # Enable Airspeed check circuit breaker because Rovers will have no airspeed sensor
 param set-default CBRK_AIRSPD_CHK 162128
 
