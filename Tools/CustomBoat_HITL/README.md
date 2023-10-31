@@ -1,5 +1,8 @@
 # custom_boat
 
-1、将/models/myboat文件夹复制到/Tools/sitl_gazebo/models中
+使用方式：
+1、在硬件在环模式中（HITL）；
 
-2、将/worlds/customboat.world文件复制到/Tools/sitl_gazebo/worlds中
+2、source Tools/setup_gazebo.bash $(pwd) $(pwd)/build/px4_sitl_default
+
+3、gazebo Tools/CustomBoat_HITL/worlds/customboat.world
