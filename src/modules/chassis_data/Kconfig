@@ -1,0 +1,5 @@
+menuconfig MODULES_CHASSIS_DATA
+	bool "chassis_data"
+	default n
+	---help---
+		Enable support for chassis_data

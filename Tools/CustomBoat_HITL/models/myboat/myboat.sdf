@@ -276,6 +276,15 @@
           <izz>0.0144</izz>
         </inertia>
       </inertial>
+      <collision name='left_propeller_link_fixed_joint_lump__left_propeller_collision_collision'>
+        <pose>-0.08 0 0 3.14159 0.0 3.14159</pose>
+        <geometry>
+          <cylinder>
+            <length>0.18</length>
+            <radius>0.24</radius>
+          </cylinder>
+        </geometry>
+      </collision>
       <visual name='left_propeller_link_visual'>
         <pose>0 0 0 0 -1.57079 0</pose>
         <geometry>
@@ -319,6 +328,15 @@
           <izz>0.0144</izz>
         </inertia>
       </inertial>
+      <collision name='right_propeller_link_fixed_joint_lump__right_propeller_collision_collision'>
+        <pose>-0.08 0 0 3.14159 0.0 3.14159</pose>
+        <geometry>
+          <cylinder>
+            <length>0.18</length>
+            <radius>0.24</radius>
+          </cylinder>
+        </geometry>
+      </collision>
       <visual name='right_propeller_link_visual'>
         <pose>0 0 0 0 -1.57079 0</pose>
         <geometry>
