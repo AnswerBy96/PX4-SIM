@@ -1,0 +1,5 @@
+menuconfig MODULES_EBOAT_MAVLINK
+	bool "eboat_mavlink"
+	default n
+	---help---
+		Enable support for eboat_mavlink
