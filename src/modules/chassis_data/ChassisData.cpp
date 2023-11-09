@@ -7,6 +7,9 @@ ChassisData::ChassisData() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
 {
+	chassisData.have_steeringwheel = false;
+	chassisData.steeringwheel = 0.0f;
+	chassisData.throttle = 0.0f;
 }
 
 ChassisData::~ChassisData()

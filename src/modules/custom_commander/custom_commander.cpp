@@ -4,6 +4,10 @@ CustomCommander::CustomCommander() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
 {
+	_custom_commander.current_gear = GEAR_P;
+	_custom_commander.target_steeringwheel = 0.0f;
+	_custom_commander.target_throttle = 0.0f;
+	_custom_commander.drive_mode = 0;				//默认手动驾驶模式
 }
 
 CustomCommander::~CustomCommander()
@@ -21,29 +25,51 @@ void CustomCommander::gear_commander()
 {
 	if( _chassis_data.gear_left != _chassis_data.gear_right)
 	{
-		_custom_command.current_gear = GEAR_P;
-		_custom_command.system_error = _custom_command.system_error | 0x01;	//两个档位不匹配
+		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.system_error = _custom_commander.system_error | 0x01;	//两个档位不匹配
 		return;
 	}
 	else if(_chassis_data.gear_left == GEAR_P || _chassis_data.gear_right == GEAR_P)
 	{
-		_custom_command.current_gear = GEAR_P;
-		_custom_command.system_error = _custom_command.system_error & 0xFE;
+		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
 	else if(_chassis_data.gear_left == GEAR_D && _chassis_data.gear_right == GEAR_D)
 	{
-		_custom_command.current_gear = GEAR_D;
-		_custom_command.system_error = _custom_command.system_error & 0xFE;
+		_custom_commander.current_gear = GEAR_D;
+		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
 	else if(_chassis_data.gear_left == GEAR_R && _chassis_data.gear_right == GEAR_R)
 	{
-		_custom_command.current_gear = GEAR_R;
-		_custom_command.system_error = _custom_command.system_error & 0xFE;
+		_custom_commander.current_gear = GEAR_R;
+		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
 
+}
+
+void CustomCommander::cal_throttle_sheeringwheel()
+{
+	static int8_t averageThrottle = 0;
+	if(_chassis_data.have_steeringwheel)	//如果有方向盘则转向信号使用方向盘，否则使用两个推杆的差
+		_custom_commander.target_steeringwheel = _chassis_data.steeringwheel;
+	else
+	{
+		if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)>=15)
+			_custom_commander.target_steeringwheel = (_chassis_data.throttle_left - _chassis_data.throttle_right) / 100.0f;
+		else
+			_custom_commander.target_steeringwheel = 0.0f;
+	}
+
+	if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)<=10)
+	{
+		averageThrottle = (_chassis_data.throttle_left + _chassis_data.throttle_right) / 2 ;
+
+		_custom_commander.target_throttle = averageThrottle / 100.0f;
+
+	}
 }
 
 bool CustomCommander::init()
@@ -62,29 +88,33 @@ void CustomCommander::Run()
 		return;
 	}
 
-	if(_chassis_data_sub.copy(_chassis_data))
+	if(_ui2px4_sub.copy(&_ui2px4))
 	{
-		gear_commander();
-		if(_custom_command.current_gear == GEAR_D || _custom_command.current_gear == GEAR_R)
-		{
-			if(_chassis_data.have_steeringwheel)	//如果有方向盘则转向信号使用方向盘，否则使用两个推杆的差
-				_custom_command.target_steeringwheel = _chassis_data.steeringwheel;
-			else
-				_custom_command.target_steeringwheel = (_chassis_data.throttle_left - _chassis_data.throttle_right) / 100.0f;
-		}
+		_custom_commander.system_start = _ui2px4.control_start_stop;
 	}
-
-	switch (boat_status.driveMode)
+	_ui2px4.mode = MANUAL;
+	switch (_ui2px4.mode)
 	{
 		case MANUAL:
-			/* code */
+			_custom_commander.drive_mode = MANUAL;
+			if(_chassis_data_sub.copy(&_chassis_data))
+			{
+				gear_commander();
+				if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+				{
+					_chassis_data.have_steeringwheel = false;	//测试用，实际使用删除
+					cal_throttle_sheeringwheel();		//计算油门和转向
+				}
+			}
 			break;
 		case AUTO:
+			_custom_commander.drive_mode = AUTO;
 			break;
 		default:
 			break;
 	}
-	_custom_command_pub.publish(_custom_command);
+	_custom_commander.timestamp = (int)time((time_t*) NULL);
+	_custom_commander_pub.publish(_custom_commander);
 
 }
 
@@ -142,7 +172,7 @@ Example of a simple module running out of a work queue.
 	return 0;
 }
 
-extern "C" __EXPORT int work_item_example_main(int argc, char *argv[])
+extern "C" __EXPORT int custom_commander_main(int argc, char *argv[])
 {
 	return CustomCommander::main(argc, argv);
 }

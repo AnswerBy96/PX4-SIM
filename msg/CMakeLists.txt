@@ -63,7 +63,7 @@ set(msg_files
 	commander_state.msg
 	control_allocator_status.msg
 	cpuload.msg
-	custom_command.msg
+	custom_commander.msg
 	differential_pressure.msg
 	distance_sensor.msg
 	ekf2_timestamps.msg

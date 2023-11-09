@@ -152,14 +152,38 @@ RoverPositionControl::manual_control_setpoint_poll()
 					_attitude_sp_pub.publish(_att_sp);
 
 				} else {
-					_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
-					_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
-					// Set heading from the manual roll input channel
-					_act_controls.control[actuator_controls_s::INDEX_YAW] =
-						_manual_control_setpoint.y; // Nominally yaw: _manual_control_setpoint.r;
-					// Set throttle from the manual throttle channel
-					_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _manual_control_setpoint.z;
-					_reset_yaw_sp = true;
+					if(_custom_commander_sub.copy(&_custom_commander))
+					{
+						if(_custom_commander.drive_mode == MANUAL)
+						{
+							_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
+							_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
+							// Set heading from the manual roll input channel
+							_act_controls.control[actuator_controls_s::INDEX_YAW] = _custom_commander.target_steeringwheel;
+							// Set throttle from the manual throttle channel
+							_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
+							_reset_yaw_sp = true;
+						}
+						else if(_custom_commander.drive_mode == REMOTE)
+						{
+							_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
+							_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
+							// Set heading from the manual roll input channel
+							_act_controls.control[actuator_controls_s::INDEX_YAW] =
+								_manual_control_setpoint.y; // Nominally yaw: _manual_control_setpoint.r;
+							// Set throttle from the manual throttle channel
+							_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _manual_control_setpoint.z;
+							_reset_yaw_sp = true;
+						}
+					}
+					// _act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
+					// _act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
+					// // Set heading from the manual roll input channel
+					// _act_controls.control[actuator_controls_s::INDEX_YAW] =
+					// 	_manual_control_setpoint.y; // Nominally yaw: _manual_control_setpoint.r;
+					// // Set throttle from the manual throttle channel
+					// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _manual_control_setpoint.z;
+					// _reset_yaw_sp = true;
 				}
 
 			} else {

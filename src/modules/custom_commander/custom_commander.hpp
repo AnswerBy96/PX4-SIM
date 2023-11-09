@@ -7,11 +7,15 @@
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 
+#include <time.h>
+#include <termios.h>
+#include <math.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/chassis_data.h>
-#include <uORB/topics/custom_command.h>
+#include <uORB/topics/custom_commander.h>
+#include <uORB/topics/ui_to_px4.h>
 
 using namespace time_literals;
 
@@ -46,7 +50,8 @@ public:
 
 	enum DriveMode {
 		MANUAL = 0,
-		AUTO = 1
+		AUTO,
+		REMOTE
 	};
 
 	struct BoatStatus
@@ -65,15 +70,19 @@ private:
 	perf_counter_t	_loop_interval_perf{perf_alloc(PC_INTERVAL, MODULE_NAME": interval")};
 
 	chassis_data_s _chassis_data{};
-	custom_command_s _custom_command{};
+	custom_commander_s _custom_commander{};
+	ui_to_px4_s _ui2px4{};
 
 	void auto_commander();
 	void gear_commander();
 
+	void cal_throttle_sheeringwheel();
+
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
+	uORB::Subscription _ui2px4_sub{ORB_ID(ui_to_px4)};
 	// uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	//Publication
-	uORB::Publication<custom_command_s> _custom_command_pub{ORB_ID(custom_command)};
+	uORB::Publication<custom_commander_s> _custom_commander_pub{ORB_ID(custom_commander)};
 };

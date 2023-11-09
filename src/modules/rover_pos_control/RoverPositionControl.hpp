@@ -76,6 +76,7 @@
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
 #include <uORB/topics/chassis_data.h>
+#include <uORB/topics/custom_commander.h>
 
 using matrix::Dcmf;
 
@@ -120,8 +121,10 @@ private:
 	uORB::Subscription _att_sp_sub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
 
+	uORB::Subscription _custom_commander_sub{ORB_ID(custom_commander)};
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
 
+	custom_commander_s			_custom_commander{};
 	chassis_data_s						_chassis_data{};
 	manual_control_setpoint_s		_manual_control_setpoint{};			    /**< r/c channel data */
 	position_setpoint_triplet_s		_pos_sp_triplet{};		/**< triplet of mission items */
@@ -172,6 +175,12 @@ private:
 		NED,
 		BODY,
 	} _velocity_frame{VelocityFrame::NED};
+
+	enum DriveMode {
+		MANUAL = 0,
+		AUTO,
+		REMOTE
+	};
 
 	float _manual_yaw_sp{0.0};
 	bool _reset_yaw_sp{true};

@@ -51,10 +51,10 @@ void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 		case 0x00:	//P挡
 			chassisData.gear_right = 0;
 			break;
-		case 0x0c:	//R挡
+		case 0x08:	//R挡
 			chassisData.gear_right = 2;
 			break;
-		case 0x03:	//D挡
+		case 0x01:	//D挡
 			chassisData.gear_right = 3;
 			break;
 		default:
@@ -66,10 +66,10 @@ void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 		case 0x00:	//P挡
 			chassisData.gear_left = 0;
 			break;
-		case 0x0c:	//R挡
+		case 0x08:	//R挡
 			chassisData.gear_left = 2;
 			break;
-		case 0x03:	//D挡
+		case 0x01:	//D挡
 			chassisData.gear_left = 3;
 			break;
 		default:
