@@ -46,10 +46,38 @@ float ChassisData::decodeSteerWheel(unsigned char *data)
 void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 {
 	chassisData.timestamp = (int)time((time_t*) NULL);
-	chassisData.gear_right = data[1];
-	chassisData.gear_left = data[2];
+	switch (data[1])
+	{
+		case 0x00:	//P挡
+			chassisData.gear_right = 0;
+			break;
+		case 0x0c:	//R挡
+			chassisData.gear_right = 2;
+			break;
+		case 0x03:	//D挡
+			chassisData.gear_right = 3;
+			break;
+		default:
+			break;
+	}
+
+	switch (data[2])
+	{
+		case 0x00:	//P挡
+			chassisData.gear_left = 0;
+			break;
+		case 0x0c:	//R挡
+			chassisData.gear_left = 2;
+			break;
+		case 0x03:	//D挡
+			chassisData.gear_left = 3;
+			break;
+		default:
+			break;
+	}
 	chassisData.throttle_right = data[3];
 	chassisData.throttle_left = data[4];
 	chassisData.throttle_button = data[5];
+	chassisData.throttle = chassisData.throttle_left / 100.0f;
 	_orb_chassisData_pub.publish(chassisData);
 }

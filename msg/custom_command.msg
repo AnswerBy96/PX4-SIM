@@ -1,0 +1,7 @@
+uint64 timestamp		# time since system start (microseconds)
+uint8  current_gear					#vehicle gear
+float32 target_throttle					# [-1 , 1]
+float32 target_steeringwheel			# [-1 , 1]
+uint8 driver_mode				#0 -> manual , 1 -> auto
+bool  system_start			#turn on or turn off system
+uint8  system_error		#bit0 -> gear error

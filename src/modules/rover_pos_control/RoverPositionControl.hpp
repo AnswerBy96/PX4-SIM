@@ -75,6 +75,7 @@
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
+#include <uORB/topics/chassis_data.h>
 
 using matrix::Dcmf;
 
@@ -119,6 +120,9 @@ private:
 	uORB::Subscription _att_sp_sub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
 
+	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
+
+	chassis_data_s						_chassis_data{};
 	manual_control_setpoint_s		_manual_control_setpoint{};			    /**< r/c channel data */
 	position_setpoint_triplet_s		_pos_sp_triplet{};		/**< triplet of mission items */
 	vehicle_attitude_setpoint_s		_att_sp{};			/**< attitude setpoint > */
@@ -214,6 +218,7 @@ private:
 	bool		control_position(const matrix::Vector2d &global_pos, const matrix::Vector3f &ground_speed,
 					 const position_setpoint_triplet_s &_pos_sp_triplet);
 	void		control_velocity(const matrix::Vector3f &current_velocity);
+	void 		manual_control_velocity(const matrix::Vector3f &current_velocity , float desiredVelocity);
 	void		control_attitude(const vehicle_attitude_s &att, const vehicle_attitude_setpoint_s &att_sp);
 
 };

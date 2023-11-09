@@ -333,7 +333,7 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position,
 void
 RoverPositionControl::control_velocity(const matrix::Vector3f &current_velocity)
 {
-	const Vector3f desired_velocity{_trajectory_setpoint.vx, _trajectory_setpoint.vy, _trajectory_setpoint.vz};
+	const Vector3f desired_velocity{_trajectory_setpoint.vx,_trajectory_setpoint.vy,_trajectory_setpoint.vz};
 	float dt = 0.01; // Using non zero value to a avoid division by zero
 
 	const float mission_throttle = _param_throttle_cruise.get();
@@ -366,6 +366,33 @@ RoverPositionControl::control_velocity(const matrix::Vector3f &current_velocity)
 		control_effort = math::constrain(control_effort, -1.0f, 1.0f);
 
 		_act_controls.control[actuator_controls_s::INDEX_YAW] = control_effort;
+
+	} else {
+
+		_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+		_act_controls.control[actuator_controls_s::INDEX_YAW] = 0.0f;
+	}
+}
+
+void
+RoverPositionControl::manual_control_velocity(const matrix::Vector3f &current_velocity , float desiredVelocity)
+{
+	float dt = 0.01; // Using non zero value to a avoid division by zero
+
+	const float mission_throttle = _param_throttle_cruise.get();
+	const float desired_speed = desiredVelocity;
+
+	if (desired_speed > 0.01f) {
+		const Dcmf R_to_body(Quatf(_vehicle_att.q).inversed());
+		const Vector3f vel = R_to_body * Vector3f(current_velocity(0), current_velocity(1), current_velocity(2));
+
+		const float x_vel = vel(0);
+		const float x_acc = _vehicle_acceleration_sub.get().xyz[0];
+
+		const float control_throttle = pid_calculate(&_speed_ctrl, desired_speed, x_vel, x_acc, dt);
+
+		//Constrain maximum throttle to mission throttle
+		_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = math::constrain(control_throttle, 0.0f, mission_throttle);
 
 	} else {
 

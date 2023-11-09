@@ -1,0 +1,5 @@
+menuconfig MODULES_CUSTOM_COMMANDER
+	bool "custom_commander"
+	default n
+	---help---
+		Enable support for custom_commander

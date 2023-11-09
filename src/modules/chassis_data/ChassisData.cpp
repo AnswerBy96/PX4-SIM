@@ -61,7 +61,7 @@ void ChassisData::parameters_update(bool force)
 bool ChassisData::init()
 {
 	// parameters_update(true);
-	ScheduleOnInterval(100000_us);//单位是微秒
+	ScheduleOnInterval(20000_us);//单位是微秒
 	return true;
 }
 
@@ -82,34 +82,34 @@ void ChassisData::Run()
 		uart = new Uart(uartPortName,uartBaudRate);
 	}
 
-	uart->send(sendData,sizeof(sendData));
-	if(uart->receive(uartBuffer,sizeof(uartBuffer)))
-	{
-		switch (uartBuffer[0])	//检查地址码
-		{
-			case STEERINGWHEEL:
-				for(int i = 0;i<4;i++)
-				{
-					pendProcessData[i] = uartBuffer[i+2];
-				}
-				chassisData.timestamp = (int)time((time_t*) NULL);
-				chassisData.steeringwheel = decodeSteerWheel(pendProcessData);
-				chassisData.throttle = 0.2f;
-				_orb_chassisData_pub.publish(chassisData);
-				break;
-			case THROTTLE:
-				for(int i = 0;i<4;i++)
-				{
-					pendProcessData[i] = uartBuffer[i+2];
-				}
-				chassisData.timestamp = (int)time((time_t*) NULL);
-				//chassisData.throttle = decodeThrottle(pendProcessData);
-				_orb_chassisData_pub.publish(chassisData);
-				break;
-			default:
-				break;
-		}
-	}
+	// uart->send(sendData,sizeof(sendData));
+	// if(uart->receive(uartBuffer,sizeof(uartBuffer)))
+	// {
+	// 	switch (uartBuffer[0])	//检查地址码
+	// 	{
+	// 		case STEERINGWHEEL:
+	// 			for(int i = 0;i<4;i++)
+	// 			{
+	// 				pendProcessData[i] = uartBuffer[i+2];
+	// 			}
+	// 			chassisData.timestamp = (int)time((time_t*) NULL);
+	// 			chassisData.steeringwheel = decodeSteerWheel(pendProcessData);
+	// 			chassisData.throttle = 0.2f;
+	// 			_orb_chassisData_pub.publish(chassisData);
+	// 			break;
+	// 		case THROTTLE:
+	// 			for(int i = 0;i<4;i++)
+	// 			{
+	// 				pendProcessData[i] = uartBuffer[i+2];
+	// 			}
+	// 			chassisData.timestamp = (int)time((time_t*) NULL);
+	// 			//chassisData.throttle = decodeThrottle(pendProcessData);
+	// 			_orb_chassisData_pub.publish(chassisData);
+	// 			break;
+	// 		default:
+	// 			break;
+	// 	}
+	// }
 
 	if(udp->receive(recvCANbuffer,sizeof(recvCANbuffer)))
 	{
