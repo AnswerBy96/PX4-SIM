@@ -1,179 +1,137 @@
-#include "eboat_mavlink.h"
+/*
+ * @Descripttion:
+ * @version:
+ * @Author: chenjw
+ * @Date: 2023-11-01 02:06:28
+ * @LastEditors: rsj
+ * @LastEditTime: 2023-11-21 18:48:46
+ */
+#include "eboat_mavlink.hpp"
 
-#include <px4_platform_common/getopt.h>
-#include <px4_platform_common/log.h>
-#include <px4_platform_common/posix.h>
+eboat_mavlink::eboat_mavlink() :
+	ModuleParams(nullptr),
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
+{
+}
 
-#include <uORB/topics/parameter_update.h>
-#include <uORB/topics/sensor_combined.h>
+eboat_mavlink::~eboat_mavlink()
+{
+	perf_free(_loop_perf);
+	perf_free(_loop_interval_perf);
+}
 
+bool eboat_mavlink::init()
+{
+	// alternatively, Run on fixed interval
+	ScheduleOnInterval(100000_us); // 2000 us interval, 200 Hz rate
+
+	return true;
+}
+
+void eboat_mavlink::Run()
+{
+	if (should_exit()) {
+		ScheduleClear();
+		exit_and_cleanup();
+		return;
+	}
+
+    px4_to_ui_.timestamp = (int)time((time_t*) NULL);
+
+    //eboat_speed & eboat_direction
+    if (vehicle_local_position_sub.update(&vehicle_local_position_))
+    {
+        matrix::Vector3f ground_speed(vehicle_local_position_.vx, vehicle_local_position_.vy,  vehicle_local_position_.vz);
+        vehicle_attitude_sub.copy(&vehicle_attitude_);
+        const Dcmf R_to_body(matrix::Quatf(vehicle_attitude_.q).inversed());
+        const  matrix::Vector3f vel = R_to_body * matrix::Vector3f(ground_speed(0), ground_speed(1), ground_speed(2));
+        const float x_vel = vel(0);
+
+        px4_to_ui_.eboat_speed = x_vel;
+        px4_to_ui_.eboat_heading = vehicle_local_position_.heading;
+    }
+
+    //gear
+    if(custom_commander_sub.update(&custom_commander_))
+    {
+        px4_to_ui_.gear = custom_commander_.current_gear;
+    }
+
+    //motor speed and direction
+       px4_to_ui_.motor1_speed = 10;
+       px4_to_ui_.motor2_speed = 10;
+       px4_to_ui_.motor1_direction = 1;
+       px4_to_ui_.motor2_direction = 0;
+
+// Test
+//     px4_to_ui_.motor1_speed = 10;
+//     px4_to_ui_.motor2_speed = 10;
+//     px4_to_ui_.motor1_direction = 1;
+//     px4_to_ui_.motor2_direction = 0;
+//     px4_to_ui_.eboat_speed = 5;
+//     px4_to_ui_.eboat_heading = 100;
+//     px4_to_ui_.gear = 1;
+
+    eboat_mavlink_pub.publish(px4_to_ui_);
+
+
+}
+
+int eboat_mavlink::task_spawn(int argc, char *argv[])
+{
+	eboat_mavlink *instance = new eboat_mavlink();
+
+	if (instance) {
+		_object.store(instance);
+		_task_id = task_id_is_work_queue;
+
+		if (instance->init()) {
+			return PX4_OK;
+		}
+
+	} else {
+		PX4_ERR("alloc failed");
+	}
+
+	delete instance;
+	_object.store(nullptr);
+	_task_id = -1;
+
+	return PX4_ERROR;
+}
 
 int eboat_mavlink::print_status()
 {
-    PX4_INFO("Running");
-    // TODO: print additional runtime information about the state of the module
-
-    return 0;
+	printf("running...\n");
+	return 0;
 }
 
 int eboat_mavlink::custom_command(int argc, char *argv[])
 {
-    /*
-    if (!is_running()) {
-        print_usage("not running");
-        return 1;
-    }
-
-    // additional custom commands can be handled like this:
-    if (!strcmp(argv[0], "do-something")) {
-        get_instance()->do_something();
-        return 0;
-    }
-     */
-
-    return print_usage("unknown command");
-}
-
-
-int eboat_mavlink::task_spawn(int argc, char *argv[])
-{
-    _task_id = px4_task_spawn_cmd("module",
-                                  SCHED_DEFAULT,
-                                  SCHED_PRIORITY_DEFAULT,
-                                  1024,
-                                  (px4_main_t)&run_trampoline,
-                                  (char *const *)argv);
-
-    if (_task_id < 0)
-    {
-        _task_id = -1;
-        return -errno;
-    }
-
-    return 0;
-}
-
-eboat_mavlink *eboat_mavlink::instantiate(int argc, char *argv[])
-{
-    int example_param = 0;
-    bool example_flag = false;
-    bool error_flag = false;
-
-    int myoptind = 1;
-    int ch;
-    const char *myoptarg = nullptr;
-
-    // parse CLI arguments
-    while ((ch = px4_getopt(argc, argv, "p:f", &myoptind, &myoptarg)) != EOF)
-    {
-        switch (ch)
-        {
-            case 'p':
-                example_param = (int)strtol(myoptarg, nullptr, 10);
-                break;
-
-            case 'f':
-                example_flag = true;
-                break;
-
-            case '?':
-                error_flag = true;
-                break;
-
-            default:
-                PX4_WARN("unrecognized flag");
-                error_flag = true;
-                break;
-        }
-    }
-
-    if (error_flag)
-    {
-        return nullptr;
-    }
-
-    eboat_mavlink *instance = new eboat_mavlink(example_param, example_flag);
-
-    if (instance == nullptr)
-    {
-        PX4_ERR("alloc failed");
-    }
-
-    return instance;
-}
-
-eboat_mavlink::eboat_mavlink(int example_param, bool example_flag)
-    : ModuleParams(nullptr)
-{
-}
-
-void eboat_mavlink::run()
-{
-
-    // initialize parameters
-    parameters_update(true);
-
-    while (!should_exit())
-    {
-//        PX4_INFO("run\n");
-        if(eboat_mavlink_sub.updated())
-        {
-            PX4_INFO("updated\n");
-        }
-        px4_usleep(50000);
-
-
-        parameters_update();
-    }
-}
-
-void eboat_mavlink::parameters_update(bool force)
-{
-    // check for parameter updates
-    if (_parameter_update_sub.updated() || force)
-    {
-        // clear update
-        parameter_update_s update;
-        _parameter_update_sub.copy(&update);
-
-        // update parameters from storage
-        updateParams();
-    }
+	return print_usage("unknown command");
 }
 
 int eboat_mavlink::print_usage(const char *reason)
 {
-    if (reason)
-    {
-        PX4_WARN("%s\n", reason);
-    }
+	if (reason) {
+		PX4_WARN("%s\n", reason);
+	}
 
-    PRINT_MODULE_DESCRIPTION(
-        R"DESCR_STR(
+	PRINT_MODULE_DESCRIPTION(
+		R"DESCR_STR(
 ### Description
-Section that describes the provided module functionality.
-
-This is a template for a module running as a task in the background with start/stop/status functionality.
-
-### Implementation
-Section describing the high-level implementation of this module.
-
-### Examples
-CLI usage example:
-$ module start -f -p 42
+Example of a simple module running out of a work queue.
 
 )DESCR_STR");
 
-	PRINT_MODULE_USAGE_NAME("module", "template");
+	PRINT_MODULE_USAGE_NAME("custom_commander", "dev");
 	PRINT_MODULE_USAGE_COMMAND("start");
-	PRINT_MODULE_USAGE_PARAM_FLAG('f', "Optional example flag", true);
-	PRINT_MODULE_USAGE_PARAM_INT('p', 0, 0, 1000, "Optional example parameter", true);
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;
 }
 
-int eboat_mavlink_main(int argc, char *argv[])
+extern "C" __EXPORT int eboat_mavlink_main(int argc, char *argv[])
 {
 	return eboat_mavlink::main(argc, argv);
 }

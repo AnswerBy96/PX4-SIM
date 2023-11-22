@@ -87,31 +87,34 @@ void CustomCommander::Run()
 		exit_and_cleanup();
 		return;
 	}
-
-	if(_ui2px4_sub.copy(&_ui2px4))
+	PX4_INFO("CustomCommander");
+	if(_ui2px4_ignition_sub.copy(&_ui2px4_ignition))
 	{
-		_custom_commander.system_start = _ui2px4.control_start_stop;
+		_custom_commander.system_start = _ui2px4_ignition.control_start_stop;
 	}
-	_ui2px4.mode = MANUAL;
-	switch (_ui2px4.mode)
+	if(_ui2px4_mode_sub.copy(&_ui2px4_mode))
 	{
-		case MANUAL:
-			_custom_commander.drive_mode = MANUAL;
-			if(_chassis_data_sub.copy(&_chassis_data))
-			{
-				gear_commander();
-				if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+		_ui2px4_mode.mode = MANUAL;
+		switch (_ui2px4_mode.mode)
+		{
+			case MANUAL:
+				_custom_commander.drive_mode = MANUAL;
+				if(_chassis_data_sub.copy(&_chassis_data))
 				{
-					_chassis_data.have_steeringwheel = false;	//测试用，实际使用删除
-					cal_throttle_sheeringwheel();		//计算油门和转向
+					gear_commander();
+					if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+					{
+						_chassis_data.have_steeringwheel = false;	//测试用，实际使用删除
+						cal_throttle_sheeringwheel();		//计算油门和转向
+					}
 				}
-			}
-			break;
-		case AUTO:
-			_custom_commander.drive_mode = AUTO;
-			break;
-		default:
-			break;
+				break;
+			case AUTO:
+				_custom_commander.drive_mode = AUTO;
+				break;
+			default:
+				break;
+		}
 	}
 	_custom_commander.timestamp = (int)time((time_t*) NULL);
 	_custom_commander_pub.publish(_custom_commander);
