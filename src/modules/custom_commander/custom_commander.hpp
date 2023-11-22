@@ -1,3 +1,11 @@
+/*
+ * @Descripttion:
+ * @version:
+ * @Author: chenjw
+ * @Date: 2023-11-09 18:56:46
+ * @LastEditors: rsj
+ * @LastEditTime: 2023-11-19 18:19:49
+ */
 #pragma once
 
 #include <px4_platform_common/log.h>
@@ -15,7 +23,8 @@
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/chassis_data.h>
 #include <uORB/topics/custom_commander.h>
-#include <uORB/topics/ui_to_px4.h>
+#include <uORB/topics/ui_to_px4_ignition.h>
+#include <uORB/topics/ui_to_px4_mode.h>
 
 using namespace time_literals;
 
@@ -75,7 +84,10 @@ private:
 
 	chassis_data_s _chassis_data{};
 	custom_commander_s _custom_commander{};
-	ui_to_px4_s _ui2px4{};
+	ui_to_px4_ignition_s _ui2px4_ignition{};
+	ui_to_px4_mode_s _ui2px4_mode{};
+
+
 
 	void auto_commander();
 	void gear_commander();
@@ -84,7 +96,8 @@ private:
 
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
-	uORB::Subscription _ui2px4_sub{ORB_ID(ui_to_px4)};
+	uORB::Subscription _ui2px4_ignition_sub{ORB_ID(ui_to_px4_ignition)};
+	uORB::Subscription _ui2px4_mode_sub{ORB_ID(ui_to_px4_mode)};
 	// uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	//Publication

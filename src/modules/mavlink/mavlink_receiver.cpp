@@ -116,8 +116,11 @@ void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
-	case MAVLINK_MSG_ID_UI_TO_PX4:
-		handle_message_ui_to_px4(msg);
+	case MAVLINK_MSG_ID_UI_TO_PX4_IGNITION:
+		handle_message_ui_to_px4_ignition(msg);
+		break;
+	case MAVLINK_MSG_ID_UI_TO_PX4_MODE:
+		handle_message_ui_to_px4_mode(msg);
 		break;
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		handle_message_command_long(msg);
@@ -3079,15 +3082,31 @@ MavlinkReceiver::handle_message_gimbal_device_attitude_status(mavlink_message_t 
 }
 
 void
-MavlinkReceiver::handle_message_ui_to_px4(mavlink_message_t *msg)
+MavlinkReceiver::handle_message_ui_to_px4_mode(mavlink_message_t *msg)
 {
-	mavlink_ui_to_px4_t ui_to_px4_msg;
-	mavlink_msg_ui_to_px4_decode(msg,&ui_to_px4_msg);
-	ui_to_px4_s __ui_to_px4;
-	__ui_to_px4.control_start_stop = ui_to_px4_msg.control_start_stop;
-	__ui_to_px4.gear = ui_to_px4_msg.gear;
-	__ui_to_px4.mode = ui_to_px4_msg.mode;
-	_eboat_mavlink_pub.publish(__ui_to_px4);
+
+
+	mavlink_ui_to_px4_mode_t ui_to_px4_mode_msg;
+	mavlink_msg_ui_to_px4_mode_decode(msg,&ui_to_px4_mode_msg);
+	ui_to_px4_mode_s _ui_to_px4_mode;
+
+	_ui_to_px4_mode.timestamp = hrt_absolute_time();
+	_ui_to_px4_mode.mode = _ui_to_px4_mode.mode;
+
+	_eboat_mavlink_mode_pub.publish(_ui_to_px4_mode);
+}
+
+void
+MavlinkReceiver::handle_message_ui_to_px4_ignition(mavlink_message_t *msg)
+{
+	mavlink_ui_to_px4_ignition_t ui_to_px4_ignition_msg;
+	mavlink_msg_ui_to_px4_ignition_decode(msg,&ui_to_px4_ignition_msg);
+	ui_to_px4_ignition_s _ui_to_px4_ignition;
+
+	_ui_to_px4_ignition.timestamp = hrt_absolute_time();
+	_ui_to_px4_ignition.control_start_stop = ui_to_px4_ignition_msg.control_start_stop;
+
+	_eboat_mavlink_ignition_pub.publish(_ui_to_px4_ignition);
 
 }
 

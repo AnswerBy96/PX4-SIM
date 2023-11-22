@@ -109,7 +109,8 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_trajectory_bezier.h>
 #include <uORB/topics/vehicle_trajectory_waypoint.h>
-#include <uORB/topics/ui_to_px4.h>
+#include <uORB/topics/ui_to_px4_ignition.h>
+#include <uORB/topics/ui_to_px4_mode.h>
 
 #if !defined(CONSTRAINED_FLASH)
 # include <uORB/topics/debug_array.h>
@@ -155,7 +156,8 @@ private:
 
 	void handle_message(mavlink_message_t *msg);
 
-	void handle_message_ui_to_px4(mavlink_message_t *msg);
+	void handle_message_ui_to_px4_ignition(mavlink_message_t *msg);
+	void handle_message_ui_to_px4_mode(mavlink_message_t *msg);
 	void handle_message_adsb_vehicle(mavlink_message_t *msg);
 	void handle_message_att_pos_mocap(mavlink_message_t *msg);
 	void handle_message_battery_status(mavlink_message_t *msg);
@@ -345,7 +347,8 @@ private:
 	uORB::Publication<transponder_report_s>  _transponder_report_pub{ORB_ID(transponder_report)};
 	uORB::Publication<vehicle_command_s>     _cmd_pub{ORB_ID(vehicle_command)};
 	uORB::Publication<vehicle_command_ack_s> _cmd_ack_pub{ORB_ID(vehicle_command_ack)};
-	uORB::Publication<ui_to_px4_s>       _eboat_mavlink_pub{ORB_ID(ui_to_px4)};
+	uORB::Publication<ui_to_px4_mode_s>       _eboat_mavlink_mode_pub{ORB_ID(ui_to_px4_mode)};
+	uORB::Publication<ui_to_px4_ignition_s>   _eboat_mavlink_ignition_pub{ORB_ID(ui_to_px4_ignition)};
 
 	// ORB subscriptions
 	uORB::Subscription	_actuator_armed_sub{ORB_ID(actuator_armed)};
