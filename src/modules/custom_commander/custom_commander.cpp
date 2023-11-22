@@ -7,7 +7,7 @@ CustomCommander::CustomCommander() :
 	_custom_commander.current_gear = GEAR_P;
 	_custom_commander.target_steeringwheel = 0.0f;
 	_custom_commander.target_throttle = 0.0f;
-	_custom_commander.drive_mode = 0;				//默认手动驾驶模式
+	_custom_commander.drive_mode = MANUAL;				//默认手动驾驶模式
 }
 
 CustomCommander::~CustomCommander()
@@ -52,30 +52,46 @@ void CustomCommander::gear_commander()
 
 void CustomCommander::cal_throttle_sheeringwheel()
 {
-	static int8_t averageThrottle = 0;
-	if(_chassis_data.have_steeringwheel)	//如果有方向盘则转向信号使用方向盘，否则使用两个推杆的差
-		_custom_commander.target_steeringwheel = _chassis_data.steeringwheel;
-	else
-	{
-		if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)>=15)
-			_custom_commander.target_steeringwheel = (_chassis_data.throttle_left - _chassis_data.throttle_right) / 100.0f;
-		else
-			_custom_commander.target_steeringwheel = 0.0f;
-	}
 
 	if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)<=10)
 	{
 		averageThrottle = (_chassis_data.throttle_left + _chassis_data.throttle_right) / 2 ;
 
-		_custom_commander.target_throttle = averageThrottle / 100.0f;
-
+		if(isUpdateThrottle)
+		{
+			_custom_commander.target_throttle += (float)(averageThrottle - last_averageThrottle)/100/100.0f;
+			if(fabs(_custom_commander.target_throttle - (averageThrottle/100.0f)) < 0.01f)
+			{
+				isUpdateThrottle = false;
+			}
+		}
+		else
+		{
+			_custom_commander.target_throttle = averageThrottle / 100.0f;
+			last_averageThrottle = averageThrottle;
+		}
 	}
+
+	if(_chassis_data.have_steeringwheel)	//如果有方向盘则转向信号使用方向盘，否则使用两个推杆的差
+		_custom_commander.target_steeringwheel = _chassis_data.steeringwheel;
+	else
+	{
+		if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)>=15)
+		{
+			_custom_commander.target_steeringwheel = (_chassis_data.throttle_left - _chassis_data.throttle_right) / 100.0f;
+			isUpdateThrottle = true;
+
+		}
+		else
+			_custom_commander.target_steeringwheel = 0.0f;
+	}
+
 }
 
 bool CustomCommander::init()
 {
 	// alternatively, Run on fixed interval
-	ScheduleOnInterval(10000_us); // 2000 us interval, 200 Hz rate
+	ScheduleOnInterval(10000_us); // 10000 us interval, 100 Hz rate
 
 	return true;
 }
@@ -102,7 +118,6 @@ void CustomCommander::Run()
 				gear_commander();
 				if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
 				{
-					_chassis_data.have_steeringwheel = false;	//测试用，实际使用删除
 					cal_throttle_sheeringwheel();		//计算油门和转向
 				}
 			}
@@ -161,7 +176,7 @@ int CustomCommander::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-Example of a simple module running out of a work queue.
+Capture steeringwheel and throttle data.
 
 )DESCR_STR");
 

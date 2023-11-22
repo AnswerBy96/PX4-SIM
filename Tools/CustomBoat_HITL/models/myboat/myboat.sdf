@@ -295,7 +295,7 @@
         </geometry>
       </visual>
     </link>
-    
+
     <joint name='left_engine_propeller_joint' type='revolute'>
       <child>left_propeller_link</child>
       <parent>base_link</parent>

@@ -184,6 +184,7 @@ private:
 
 	float _manual_yaw_sp{0.0};
 	bool _reset_yaw_sp{true};
+	float target_speed_max{0.0};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::GND_L1_PERIOD>) _param_l1_period,
@@ -207,7 +208,8 @@ private:
 		(ParamFloat<px4::params::GND_WHEEL_BASE>) _param_wheel_base,
 		(ParamFloat<px4::params::GND_MAX_ANG>) _param_max_turn_angle,
 		(ParamFloat<px4::params::GND_MAN_Y_MAX>) _param_gnd_man_y_max,
-		(ParamFloat<px4::params::NAV_LOITER_RAD>) _param_nav_loiter_rad	/**< loiter radius for Rover */
+		(ParamFloat<px4::params::NAV_LOITER_RAD>) _param_nav_loiter_rad,	/**< loiter radius for Rover */
+		(ParamFloat<px4::params::STOP_MIN_DIST>) _param_stop_min_distance	/**< loiter radius for Rover */
 	)
 
 	/**

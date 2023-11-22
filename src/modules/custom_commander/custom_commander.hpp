@@ -65,6 +65,10 @@ public:
 private:
 	void Run() override;
 
+	int8_t averageThrottle = 0;
+	int8_t last_averageThrottle = 0;
+ 	bool isUpdateThrottle = false;
+
 	// Performance (perf) counters
 	perf_counter_t	_loop_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
 	perf_counter_t	_loop_interval_perf{perf_alloc(PC_INTERVAL, MODULE_NAME": interval")};

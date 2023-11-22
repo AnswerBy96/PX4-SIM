@@ -94,6 +94,7 @@ void RoverPositionControl::parameters_update(bool force)
 		_gnd_control.set_l1_damping(_param_l1_damping.get());
 		_gnd_control.set_l1_period(_param_l1_period.get());
 		_gnd_control.set_l1_roll_limit(math::radians(0.0f));
+		target_speed_max = _param_gndspeed_max.get();
 
 		pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
 		pid_set_parameters(&_speed_ctrl,
@@ -156,12 +157,15 @@ RoverPositionControl::manual_control_setpoint_poll()
 					{
 						if(_custom_commander.drive_mode == MANUAL)
 						{
+							matrix::Vector3f current_velocity(_local_pos.vx, _local_pos.vy, _local_pos.vz);
 							_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
 							_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
 							// Set heading from the manual roll input channel
 							_act_controls.control[actuator_controls_s::INDEX_YAW] = _custom_commander.target_steeringwheel;
 							// Set throttle from the manual throttle channel
-							_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
+							// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
+							float desireSpeed = _custom_commander.target_throttle * target_speed_max;
+							manual_control_velocity(current_velocity , desireSpeed);	//速度控制
 							_reset_yaw_sp = true;
 						}
 						else if(_custom_commander.drive_mode == REMOTE)
@@ -301,7 +305,7 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position,
 
 		switch (_pos_ctrl_state) {
 		case GOTO_WAYPOINT: {
-				if (dist_target < _param_nav_loiter_rad.get()) {
+				if (dist_target < _param_stop_min_distance.get()) {
 					_pos_ctrl_state = STOPPING;  // We are closer than loiter radius to waypoint, stop.
 
 				} else {
