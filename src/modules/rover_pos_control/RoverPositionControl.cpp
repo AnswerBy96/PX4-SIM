@@ -117,59 +117,44 @@ RoverPositionControl::vehicle_control_mode_poll()
 void
 RoverPositionControl::manual_control_setpoint_poll()
 {
-	if (_control_mode.flag_control_manual_enabled) {
-		if (_manual_control_setpoint_sub.copy(&_manual_control_setpoint)) {
-			float dt = math::constrain(hrt_elapsed_time(&_manual_setpoint_last_called) * 1e-6f,  0.0002f, 0.04f);
+	// if (_control_mode.flag_control_manual_enabled) {
+	if( _custom_commander.drive_mode == REMOTE)
+	{
+		if (_control_mode.flag_control_manual_enabled) {
+			if (_manual_control_setpoint_sub.copy(&_manual_control_setpoint)) {
+				float dt = math::constrain(hrt_elapsed_time(&_manual_setpoint_last_called) * 1e-6f,  0.0002f, 0.04f);
 
-			if (!_control_mode.flag_control_climb_rate_enabled &&
-			    !_control_mode.flag_control_offboard_enabled) {
+				if (!_control_mode.flag_control_climb_rate_enabled &&
+				!_control_mode.flag_control_offboard_enabled) {
 
-				if (_control_mode.flag_control_attitude_enabled) {
-					// STABILIZED mode generate the attitude setpoint from manual user inputs
-					_att_sp.roll_body = 0.0;
-					_att_sp.pitch_body = 0.0;
+					if (_control_mode.flag_control_attitude_enabled) {
+						// STABILIZED mode generate the attitude setpoint from manual user inputs
+						_att_sp.roll_body = 0.0;
+						_att_sp.pitch_body = 0.0;
 
-					/* reset yaw setpoint to current position if needed */
-					if (_reset_yaw_sp) {
-						const float vehicle_yaw = Eulerf(Quatf(_vehicle_att.q)).psi();
-						_manual_yaw_sp = vehicle_yaw;
-						_reset_yaw_sp = false;
+						/* reset yaw setpoint to current position if needed */
+						if (_reset_yaw_sp) {
+							const float vehicle_yaw = Eulerf(Quatf(_vehicle_att.q)).psi();
+							_manual_yaw_sp = vehicle_yaw;
+							_reset_yaw_sp = false;
+
+						} else {
+							const float yaw_rate = math::radians(_param_gnd_man_y_max.get());
+							_att_sp.yaw_sp_move_rate = _manual_control_setpoint.y * yaw_rate;
+							_manual_yaw_sp = wrap_pi(_manual_yaw_sp + _att_sp.yaw_sp_move_rate * dt);
+						}
+
+						_att_sp.yaw_body = _manual_yaw_sp;
+						_att_sp.thrust_body[0] = _manual_control_setpoint.z;
+
+						Quatf q(Eulerf(_att_sp.roll_body, _att_sp.pitch_body, _att_sp.yaw_body));
+						q.copyTo(_att_sp.q_d);
+
+						_att_sp.timestamp = hrt_absolute_time();
+						_attitude_sp_pub.publish(_att_sp);
 
 					} else {
-						const float yaw_rate = math::radians(_param_gnd_man_y_max.get());
-						_att_sp.yaw_sp_move_rate = _manual_control_setpoint.y * yaw_rate;
-						_manual_yaw_sp = wrap_pi(_manual_yaw_sp + _att_sp.yaw_sp_move_rate * dt);
-					}
 
-					_att_sp.yaw_body = _manual_yaw_sp;
-					_att_sp.thrust_body[0] = _manual_control_setpoint.z;
-
-					Quatf q(Eulerf(_att_sp.roll_body, _att_sp.pitch_body, _att_sp.yaw_body));
-					q.copyTo(_att_sp.q_d);
-
-					_att_sp.timestamp = hrt_absolute_time();
-
-
-					_attitude_sp_pub.publish(_att_sp);
-
-				} else {
-					if(_custom_commander_sub.copy(&_custom_commander))
-					{
-						if(_custom_commander.drive_mode == MANUAL)
-						{
-							matrix::Vector3f current_velocity(_local_pos.vx, _local_pos.vy, _local_pos.vz);
-							_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
-							_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
-							// Set heading from the manual roll input channel
-							_act_controls.control[actuator_controls_s::INDEX_YAW] = _custom_commander.target_steeringwheel;
-							// Set throttle from the manual throttle channel
-							// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
-							float desireSpeed = _custom_commander.target_throttle * target_speed_max;
-							manual_control_velocity(current_velocity , desireSpeed);	//速度控制
-							_reset_yaw_sp = true;
-						}
-						else if(_custom_commander.drive_mode == REMOTE)
-						{
 							_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
 							_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
 							// Set heading from the manual roll input channel
@@ -179,22 +164,45 @@ RoverPositionControl::manual_control_setpoint_poll()
 							_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _manual_control_setpoint.z;
 							_reset_yaw_sp = true;
 						}
-					}
-					// _act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
-					// _act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
-					// // Set heading from the manual roll input channel
-					// _act_controls.control[actuator_controls_s::INDEX_YAW] =
-					// 	_manual_control_setpoint.y; // Nominally yaw: _manual_control_setpoint.r;
-					// // Set throttle from the manual throttle channel
-					// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _manual_control_setpoint.z;
-					// _reset_yaw_sp = true;
+
+				} else {
+					_reset_yaw_sp = true;
 				}
 
-			} else {
-				_reset_yaw_sp = true;
+				_manual_setpoint_last_called = hrt_absolute_time();
 			}
-
-			_manual_setpoint_last_called = hrt_absolute_time();
+		}
+	}
+	else if(_custom_commander.drive_mode == MANUAL)
+	{
+		matrix::Vector3f current_velocity(_local_pos.vx, _local_pos.vy, _local_pos.vz);
+		_act_controls.control[actuator_controls_s::INDEX_ROLL] = 0.0f; // Nominally roll: _manual_control_setpoint.y;
+		_act_controls.control[actuator_controls_s::INDEX_PITCH] = 0.0f; // Nominally pitch: -_manual_control_setpoint.x;
+		float desireSpeed = 0.0f;
+		switch (_custom_commander.current_gear)
+		{
+			case GEAR_P:
+				// Set heading from the manual roll input channel
+				_act_controls.control[actuator_controls_s::INDEX_YAW] = 0.0f;
+				// Set throttle from the manual throttle channel
+				// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
+				_act_controls.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+				_reset_yaw_sp = true;
+				break;
+			case GEAR_D:
+				// Set heading from the manual roll input channel
+				_act_controls.control[actuator_controls_s::INDEX_YAW] = _custom_commander.target_steeringwheel;
+				// Set throttle from the manual throttle channel
+				// _act_controls.control[actuator_controls_s::INDEX_THROTTLE] = _custom_commander.target_throttle;
+				desireSpeed = _custom_commander.target_throttle * target_speed_max;
+				manual_control_velocity(current_velocity , desireSpeed);	//速度控制
+				_reset_yaw_sp = true;
+				break;
+			case GEAR_R:
+				/* code */
+				break;
+			default:
+				break;
 		}
 	}
 }
@@ -457,6 +465,7 @@ RoverPositionControl::Run()
 
 	if (_vehicle_angular_velocity_sub.update(&angular_velocity)) {
 
+		_custom_commander_sub.update(&_custom_commander);	//获取档位、控制控制命令等
 		/* check vehicle control mode for changes to publication state */
 		vehicle_control_mode_poll();
 		attitude_setpoint_poll();

@@ -3091,7 +3091,7 @@ MavlinkReceiver::handle_message_ui_to_px4_mode(mavlink_message_t *msg)
 	ui_to_px4_mode_s _ui_to_px4_mode;
 
 	_ui_to_px4_mode.timestamp = hrt_absolute_time();
-	_ui_to_px4_mode.mode = _ui_to_px4_mode.mode;
+	_ui_to_px4_mode.mode = ui_to_px4_mode_msg.mode;
 
 	_eboat_mavlink_mode_pub.publish(_ui_to_px4_mode);
 }

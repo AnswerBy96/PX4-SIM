@@ -48,7 +48,8 @@ void eboat_mavlink::Run()
         const float x_vel = vel(0);
 
         px4_to_ui_.eboat_speed = x_vel;
-        px4_to_ui_.eboat_heading = vehicle_local_position_.heading;
+        px4_to_ui_.eboat_heading = (vehicle_local_position_.heading >= 0) ? (vehicle_local_position_.heading / M_PI * 180.0f) : (360.0f + vehicle_local_position_.heading / M_PI * 180.0f);
+
     }
 
     //gear
@@ -60,8 +61,9 @@ void eboat_mavlink::Run()
     //motor speed and direction
        px4_to_ui_.motor1_speed = 10;
        px4_to_ui_.motor2_speed = 10;
+
        px4_to_ui_.motor1_direction = 1;
-       px4_to_ui_.motor2_direction = 0;
+       px4_to_ui_.motor2_direction = 1;
 
 // Test
 //     px4_to_ui_.motor1_speed = 10;

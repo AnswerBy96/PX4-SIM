@@ -182,6 +182,13 @@ private:
 		REMOTE
 	};
 
+	enum Gear {
+		GEAR_P = 0,
+		GEAR_N = 1,
+		GEAR_R = 2,
+		GEAR_D = 3
+	};
+
 	float _manual_yaw_sp{0.0};
 	bool _reset_yaw_sp{true};
 	float target_speed_max{0.0};

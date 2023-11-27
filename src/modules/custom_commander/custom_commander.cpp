@@ -27,12 +27,16 @@ void CustomCommander::gear_commander()
 	{
 		_custom_commander.current_gear = GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error | 0x01;	//两个档位不匹配
+		_custom_commander.target_steeringwheel = 0.0f;
+		_custom_commander.target_throttle = 0.0f;
 		return;
 	}
 	else if(_chassis_data.gear_left == GEAR_P || _chassis_data.gear_right == GEAR_P)
 	{
 		_custom_commander.current_gear = GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
+		_custom_commander.target_steeringwheel = 0.0f;
+		_custom_commander.target_throttle = 0.0f;
 		return;
 	}
 	else if(_chassis_data.gear_left == GEAR_D && _chassis_data.gear_right == GEAR_D)
@@ -110,26 +114,28 @@ void CustomCommander::Run()
 	}
 	if(_ui2px4_mode_sub.copy(&_ui2px4_mode))
 	{
-		_ui2px4_mode.mode = MANUAL;
 		switch (_ui2px4_mode.mode)
 		{
 			case MANUAL:
 				_custom_commander.drive_mode = MANUAL;
-				if(_chassis_data_sub.copy(&_chassis_data))
-				{
-					gear_commander();
-					if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
-					{
-						_chassis_data.have_steeringwheel = false;	//测试用，实际使用删除
-						cal_throttle_sheeringwheel();		//计算油门和转向
-					}
-				}
 				break;
 			case AUTO:
 				_custom_commander.drive_mode = AUTO;
 				break;
-			default:
+			case REMOTE:
+				_custom_commander.drive_mode = REMOTE;
 				break;
+			default:
+				_custom_commander.drive_mode = MANUAL;
+				break;
+		}
+	}
+	if(_chassis_data_sub.copy(&_chassis_data))
+	{
+		gear_commander();		//判断当前档位
+		if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+		{
+			cal_throttle_sheeringwheel();		//计算油门和转向
 		}
 	}
 	_custom_commander.timestamp = (int)time((time_t*) NULL);
@@ -180,7 +186,7 @@ int CustomCommander::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-Capture steeringwheel and throttle data.
+Capture steeringwheel and throttle data.Capture ui command.
 
 )DESCR_STR");
 
