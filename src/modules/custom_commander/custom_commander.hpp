@@ -25,6 +25,9 @@
 #include <uORB/topics/custom_commander.h>
 #include <uORB/topics/ui_to_px4_ignition.h>
 #include <uORB/topics/ui_to_px4_mode.h>
+#include <uORB/topics/vehicle_command.h>
+#include <uORB/topics/offboard_control_mode.h>
+#include <uORB/topics/vehicle_status.h>
 
 using namespace time_literals;
 
@@ -86,6 +89,9 @@ private:
 	custom_commander_s _custom_commander{};
 	ui_to_px4_ignition_s _ui2px4_ignition{};
 	ui_to_px4_mode_s _ui2px4_mode{};
+	vehicle_command_s _vehicle_command{};
+	offboard_control_mode_s _offboard_control_mode{};
+	vehicle_status_s _status;
 
 
 
@@ -93,13 +99,17 @@ private:
 	void gear_commander();
 
 	void cal_throttle_sheeringwheel();
-
+	void publish_offboard_control_mode();
+	void publish_vehicle_command(uint16_t command, float param1 = 0.0f, float param2 = 0.0f);
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
 	uORB::Subscription _ui2px4_ignition_sub{ORB_ID(ui_to_px4_ignition)};
 	uORB::Subscription _ui2px4_mode_sub{ORB_ID(ui_to_px4_mode)};
+	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	// uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	//Publication
 	uORB::Publication<custom_commander_s> _custom_commander_pub{ORB_ID(custom_commander)};
+	uORB::Publication<vehicle_command_s> _vehicle_command_pub{ORB_ID(vehicle_command)};
+	uORB::Publication<offboard_control_mode_s> _offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
 };

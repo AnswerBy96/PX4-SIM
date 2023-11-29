@@ -92,6 +92,43 @@ void CustomCommander::cal_throttle_sheeringwheel()
 
 }
 
+void CustomCommander::publish_offboard_control_mode()
+{
+	offboard_control_mode_s msg{};
+	msg.position = false;
+	msg.velocity = false;
+	msg.acceleration = false;
+	msg.attitude = false;
+	msg.body_rate = false;
+	msg.actuator = true;
+	msg.timestamp = hrt_absolute_time();
+	_offboard_control_mode_pub.publish(msg);
+}
+
+/**
+ * @brief Publish vehicle commands
+ * @param command   Command code (matches VehicleCommand and MAVLink MAV_CMD codes)
+ * @param param1    Command parameter 1
+ * @param param2    Command parameter 2
+ */
+void CustomCommander::publish_vehicle_command(uint16_t command, float param1, float param2)
+{
+	vehicle_command_s msg{};
+	msg.param1 = param1;
+	msg.param2 = param2;
+	msg.command = command;
+
+	uORB::SubscriptionData<vehicle_status_s> vehicle_status_sub{ORB_ID(vehicle_status)};
+	msg.source_system = vehicle_status_sub.get().system_id;
+	msg.target_system = vehicle_status_sub.get().system_id;
+	msg.source_component = vehicle_status_sub.get().component_id;
+	msg.target_component = vehicle_status_sub.get().component_id;
+
+	msg.from_external = true;
+	msg.timestamp = hrt_absolute_time();
+	_vehicle_command_pub.publish(msg);
+}
+
 bool CustomCommander::init()
 {
 	// alternatively, Run on fixed interval
@@ -107,6 +144,7 @@ void CustomCommander::Run()
 		exit_and_cleanup();
 		return;
 	}
+
 	PX4_INFO("CustomCommander");
 	if(_ui2px4_ignition_sub.copy(&_ui2px4_ignition))
 	{
@@ -137,6 +175,26 @@ void CustomCommander::Run()
 		{
 			cal_throttle_sheeringwheel();		//计算油门和转向
 		}
+	}
+	if(_custom_commander.system_start && _custom_commander.drive_mode == MANUAL)
+	{
+		while (!should_exit())
+		{
+			/* code */
+			_vehicle_status_sub.update(&_status);
+			if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_OFFBOARD)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+			{
+				break;
+			}
+			publish_offboard_control_mode();	//发布offboard模式，actuator control
+
+			publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, 6);		//切换为OFFBOARD模式
+			usleep(10000);
+			publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);	//解锁
+		}
+
+		publish_offboard_control_mode();	//发布offboard模式，actuator control
+
 	}
 	_custom_commander.timestamp = (int)time((time_t*) NULL);
 	_custom_commander_pub.publish(_custom_commander);
