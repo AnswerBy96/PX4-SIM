@@ -14,6 +14,7 @@
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
+#include "commander/px4_custom_mode.h"
 
 #include <time.h>
 #include <termios.h>
@@ -66,6 +67,11 @@ public:
 		REMOTE
 	};
 
+	enum ArmDisarm {
+		DISARM=0,
+		ARM
+	};
+
 	struct BoatStatus
 	{
 		bool isStart;			  // 0-> stop , 1 -> start
@@ -99,8 +105,10 @@ private:
 	void gear_commander();
 
 	void cal_throttle_sheeringwheel();
-	void publish_offboard_control_mode();
-	void publish_vehicle_command(uint16_t command, float param1 = 0.0f, float param2 = 0.0f);
+	void publish_offboard_control_mode(bool actuator=true,bool position=false,bool velocity=false,bool acceleration=false,bool attitude=false,bool body_rate=false);
+	void publish_vehicle_command(uint16_t command, float param1 = NAN, float param2 = NAN, float param3 = NAN);
+	void into_offboard_mode();
+
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
 	uORB::Subscription _ui2px4_ignition_sub{ORB_ID(ui_to_px4_ignition)};

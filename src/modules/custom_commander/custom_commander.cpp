@@ -54,6 +54,7 @@ void CustomCommander::gear_commander()
 
 }
 
+//获取当前油门、方向盘数据
 void CustomCommander::cal_throttle_sheeringwheel()
 {
 
@@ -92,15 +93,15 @@ void CustomCommander::cal_throttle_sheeringwheel()
 
 }
 
-void CustomCommander::publish_offboard_control_mode()
+void CustomCommander::publish_offboard_control_mode(bool position,bool velocity,bool acceleration,bool attitude,bool body_rate,bool actuator)
 {
 	offboard_control_mode_s msg{};
-	msg.position = false;
-	msg.velocity = false;
-	msg.acceleration = false;
-	msg.attitude = false;
-	msg.body_rate = false;
-	msg.actuator = true;
+	msg.position = position;
+	msg.velocity = velocity;
+	msg.acceleration = acceleration;
+	msg.attitude = attitude;
+	msg.body_rate = body_rate;
+	msg.actuator = actuator;
 	msg.timestamp = hrt_absolute_time();
 	_offboard_control_mode_pub.publish(msg);
 }
@@ -110,12 +111,14 @@ void CustomCommander::publish_offboard_control_mode()
  * @param command   Command code (matches VehicleCommand and MAVLink MAV_CMD codes)
  * @param param1    Command parameter 1
  * @param param2    Command parameter 2
+ * @param param3    Command parameter 3
  */
-void CustomCommander::publish_vehicle_command(uint16_t command, float param1, float param2)
+void CustomCommander::publish_vehicle_command(uint16_t command, float param1, float param2, float param3)
 {
 	vehicle_command_s msg{};
 	msg.param1 = param1;
 	msg.param2 = param2;
+	msg.param3 = param3;
 	msg.command = command;
 
 	uORB::SubscriptionData<vehicle_status_s> vehicle_status_sub{ORB_ID(vehicle_status)};
@@ -127,6 +130,42 @@ void CustomCommander::publish_vehicle_command(uint16_t command, float param1, fl
 	msg.from_external = true;
 	msg.timestamp = hrt_absolute_time();
 	_vehicle_command_pub.publish(msg);
+}
+
+//进入offboard模式
+void CustomCommander::into_offboard_mode()
+{
+	// offboard mode
+	static uint8_t offboard_count = 0;
+	if(_custom_commander.system_start && _custom_commander.drive_mode == AUTO)
+	{
+		while (!should_exit())
+		{
+			/* code */
+
+			_vehicle_status_sub.update(&_status);
+			if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_OFFBOARD)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+			{
+				break;
+			}
+			if(offboard_count == 10)
+			{
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);		//切换为OFFBOARD模式
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+
+			}
+			publish_offboard_control_mode();	//发布offboard模式，actuator control
+			usleep(100000);
+			if(offboard_count<11)	offboard_count++;
+		}
+		publish_offboard_control_mode();	//发布offboard模式，actuator control
+
+	}
+	else
+	{
+		offboard_count = 0;
+		publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);	//上锁
+	}
 }
 
 bool CustomCommander::init()
@@ -144,7 +183,7 @@ void CustomCommander::Run()
 		exit_and_cleanup();
 		return;
 	}
-
+	static uint8_t offboard_count = 0;
 	PX4_INFO("CustomCommander");
 	if(_ui2px4_ignition_sub.copy(&_ui2px4_ignition))
 	{
@@ -176,26 +215,37 @@ void CustomCommander::Run()
 			cal_throttle_sheeringwheel();		//计算油门和转向
 		}
 	}
-	if(_custom_commander.system_start && _custom_commander.drive_mode == MANUAL)
+	if(_custom_commander.system_start == true)
 	{
-		while (!should_exit())
+		_vehicle_status_sub.update(&_status);
+		switch (_custom_commander.drive_mode)
 		{
-			/* code */
-			_vehicle_status_sub.update(&_status);
-			if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_OFFBOARD)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
-			{
+			case MANUAL:
+				if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+				{
+					break;
+				}
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
 				break;
-			}
-			publish_offboard_control_mode();	//发布offboard模式，actuator control
-
-			publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, 6);		//切换为OFFBOARD模式
-			usleep(10000);
-			publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);	//解锁
+			case REMOTE:
+				if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+				{
+					break;
+				}
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+				break;
+			case AUTO:
+				break;
+			default:
+				break;
 		}
-
-		publish_offboard_control_mode();	//发布offboard模式，actuator control
-
 	}
+	else{
+		publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);	//加锁,param2需要为21196才会跳过预检查
+	}
+
 	_custom_commander.timestamp = (int)time((time_t*) NULL);
 	_custom_commander_pub.publish(_custom_commander);
 

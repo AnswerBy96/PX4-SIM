@@ -89,3 +89,7 @@ rtps:
     send:    true
   - msg:     sensor_combined
     send:    true
+  - msg:     vehicle_thrust_setpoint
+    receive: true
+  - msg:     vehicle_torque_setpoint
+    receive: true
