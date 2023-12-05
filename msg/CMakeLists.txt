@@ -210,6 +210,7 @@ set(msg_files
 	px4_to_ui.msg
 	ui_to_px4_mode.msg
 	ui_to_px4_ignition.msg
+	plc_data.msg
 )
 
 if(NOT px4_constrained_flash_build)
