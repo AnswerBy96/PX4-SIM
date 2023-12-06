@@ -136,8 +136,8 @@ void CustomCommander::publish_vehicle_command(uint16_t command, float param1, fl
 void CustomCommander::into_offboard_mode()
 {
 	// offboard mode
-	static uint8_t offboard_count = 0;
-	if(_custom_commander.system_start && _custom_commander.drive_mode == AUTO)
+	uint8_t offboard_count = 0;
+	if(_custom_commander.system_start && _custom_commander.drive_mode == MANUAL)
 	{
 		while (!should_exit())
 		{
@@ -158,14 +158,23 @@ void CustomCommander::into_offboard_mode()
 			usleep(100000);
 			if(offboard_count<11)	offboard_count++;
 		}
-		publish_offboard_control_mode();	//发布offboard模式，actuator control
+		publish_offboard_control_mode(false,false,false,false,false,true);	//发布offboard模式，actuator control
 
 	}
-	else
+}
+
+//安全状态检查
+bool CustomCommander::safety_check()
+{
+	bool isSafety = true;
+	if(_custom_commander.target_throttle != 0.0f || _custom_commander.target_steeringwheel != 0.0f)
 	{
-		offboard_count = 0;
-		publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);	//上锁
+		isSafety = false;
+		events::send(events::ID("safe_check"),
+		{events::Log::Info, events::LogInternal::Info},
+		"current drive_mode : manual");
 	}
+	return isSafety;
 }
 
 bool CustomCommander::init()
@@ -183,70 +192,65 @@ void CustomCommander::Run()
 		exit_and_cleanup();
 		return;
 	}
-	static uint8_t offboard_count = 0;
 	PX4_INFO("CustomCommander");
-	if(_ui2px4_ignition_sub.copy(&_ui2px4_ignition))
+	if(_ui2px4_ignition_sub.update(&_ui2px4_ignition))
 	{
 		_custom_commander.system_start = _ui2px4_ignition.control_start_stop;
 	}
-	if(_ui2px4_mode_sub.copy(&_ui2px4_mode))
+
+	if(_custom_commander.system_start == true)	//总开关打开后才执行以下动作
 	{
-		switch (_ui2px4_mode.mode)
+		if(_chassis_data_sub.update(&_chassis_data))	//获取档位、油门、方向盘等传感器数据
 		{
-			case MANUAL:
-				_custom_commander.drive_mode = MANUAL;
-				break;
-			case AUTO:
-				_custom_commander.drive_mode = AUTO;
-				break;
-			case REMOTE:
-				_custom_commander.drive_mode = REMOTE;
-				break;
-			default:
-				_custom_commander.drive_mode = MANUAL;
-				break;
+			gear_commander();		//判断当前档位
+			if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+			{
+				cal_throttle_sheeringwheel();		//计算油门和转向
+			}
 		}
-	}
-	if(_chassis_data_sub.copy(&_chassis_data))
-	{
-		gear_commander();		//判断当前档位
-		if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+		if(_ui2px4_mode_sub.update(&_ui2px4_mode))
 		{
-			cal_throttle_sheeringwheel();		//计算油门和转向
-		}
-	}
-	if(_custom_commander.system_start == true)
-	{
-		_vehicle_status_sub.update(&_status);
-		switch (_custom_commander.drive_mode)
-		{
-			case MANUAL:
-				if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
-				{
+			_vehicle_status_sub.update(&_status);
+			switch (_ui2px4_mode.mode)
+			{
+				case MANUAL:
+					events::send(events::ID("drive_mode_manual"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : manual");
+					_custom_commander.drive_mode = MANUAL;
 					break;
-				}
-				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
-				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
-				break;
-			case REMOTE:
-				if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
-				{
+				case REMOTE:
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+					if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+					{
+						_custom_commander.drive_mode = REMOTE;
+						events::send(events::ID("drive_mode_remote"),
+						{events::Log::Info, events::LogInternal::Info},
+						"current drive_mode : remote");
+						break;
+					}
 					break;
-				}
-				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
-				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
-				break;
-			case AUTO:
-				break;
-			default:
-				break;
+				case AUTO:
+					_custom_commander.drive_mode = AUTO;
+					events::send(events::ID("drive_mode_auto"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : auto");
+					break;
+				default:
+					break;
+			}
 		}
+		into_offboard_mode();	//MANUAL模式时进入offboard模式
 	}
 	else{
+		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.target_steeringwheel = 0.0f;
+		_custom_commander.target_throttle = 0.0f;
+		_custom_commander.drive_mode = MANUAL;				//默认手动驾驶模式
 		publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);	//加锁,param2需要为21196才会跳过预检查
 	}
-
-	_custom_commander.timestamp = (int)time((time_t*) NULL);
+	_custom_commander.timestamp = hrt_absolute_time();
 	_custom_commander_pub.publish(_custom_commander);
 
 }

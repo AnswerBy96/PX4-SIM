@@ -12,6 +12,8 @@ eboat_mavlink::eboat_mavlink() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
 {
+        px4_to_ui_.eboat_speed = 0.0f;
+        px4_to_ui_.eboat_heading = 0.0f;
 }
 
 eboat_mavlink::~eboat_mavlink()
@@ -36,7 +38,7 @@ void eboat_mavlink::Run()
 		return;
 	}
 
-    px4_to_ui_.timestamp = (int)time((time_t*) NULL);
+    px4_to_ui_.timestamp = hrt_absolute_time();
 
     //eboat_speed & eboat_direction
     if (vehicle_local_position_sub.update(&vehicle_local_position_))
@@ -62,8 +64,8 @@ void eboat_mavlink::Run()
        px4_to_ui_.motor1_speed = 10;
        px4_to_ui_.motor2_speed = 10;
 
-       px4_to_ui_.motor1_direction = 1;
-       px4_to_ui_.motor2_direction = 1;
+       px4_to_ui_.motor1_direction = 0;
+       px4_to_ui_.motor2_direction = 0;
 
 // Test
 //     px4_to_ui_.motor1_speed = 10;
@@ -126,7 +128,7 @@ Example of a simple module running out of a work queue.
 
 )DESCR_STR");
 
-	PRINT_MODULE_USAGE_NAME("custom_commander", "dev");
+	PRINT_MODULE_USAGE_NAME("eboat_mavlink", "dev");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 

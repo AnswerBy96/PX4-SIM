@@ -45,7 +45,7 @@ float ChassisData::decodeSteerWheel(unsigned char *data)
 */
 void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 {
-	chassisData.timestamp = (int)time((time_t*) NULL);
+	chassisData.timestamp = hrt_absolute_time();
 	switch (data[1])
 	{
 		case 0x00:	//P挡

@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include <px4_platform_common/events.h>
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
@@ -15,6 +16,7 @@
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include "commander/px4_custom_mode.h"
+#include <systemlib/mavlink_log.h>
 
 #include <time.h>
 #include <termios.h>
@@ -29,6 +31,7 @@
 #include <uORB/topics/vehicle_command.h>
 #include <uORB/topics/offboard_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/mavlink_log.h>
 
 using namespace time_literals;
 
@@ -105,9 +108,10 @@ private:
 	void gear_commander();
 
 	void cal_throttle_sheeringwheel();
-	void publish_offboard_control_mode(bool actuator=true,bool position=false,bool velocity=false,bool acceleration=false,bool attitude=false,bool body_rate=false);
+	void publish_offboard_control_mode(bool position=false,bool velocity=false,bool acceleration=false,bool attitude=false,bool body_rate=false,bool actuator=true);
 	void publish_vehicle_command(uint16_t command, float param1 = NAN, float param2 = NAN, float param3 = NAN);
 	void into_offboard_mode();
+	bool safety_check();
 
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
@@ -120,4 +124,6 @@ private:
 	uORB::Publication<custom_commander_s> _custom_commander_pub{ORB_ID(custom_commander)};
 	uORB::Publication<vehicle_command_s> _vehicle_command_pub{ORB_ID(vehicle_command)};
 	uORB::Publication<offboard_control_mode_s> _offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
+
+	orb_advert_t _mavlink_log_pub{nullptr};
 };
