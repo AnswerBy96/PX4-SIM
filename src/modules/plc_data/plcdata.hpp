@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-12-04 03:57:49
  * @LastEditors: rsj
- * @LastEditTime: 2023-12-05 01:23:23
+ * @LastEditTime: 2023-12-06 02:53:24
  */
 #pragma once
 
@@ -71,7 +71,7 @@ public:
 
 	uint16_t crcCheck(unsigned char* pendBuffer);
 
-	unsigned char* PackgeCanFrame(unsigned char* buf);
+	void PackgeCanFrame(unsigned char* src,unsigned char* buf);
 	void DecodePlcData(unsigned char* buf);
 
 

@@ -30,18 +30,18 @@ void PlcData::parameters_update(bool force)
 	}
 }
 
-unsigned char PlcData::PackgeCanFrame(unsigned char* buf)
+void PlcData::PackgeCanFrame(unsigned char* src,unsigned char* buf)
 {
-	unsigned char* msg[CanFrame_Len] = {0};
+	unsigned char msg[CanFrame_Len] = {0};
 	msg[0] = 0x88; //扩展帧
 	msg[1] = PX4_CANID;
 	msg[5] = buf[0];
-	return std::move(msg);
+	std::memcpy(src,msg,sizeof(msg));
 }
 
-void DecodePlcData(unsigned char* buf)
+void PlcData::DecodePlcData(unsigned char* buf)
 {
-	
+
 }
 
 bool PlcData::init()
@@ -69,8 +69,8 @@ void PlcData::Run()
 
 	if(_orb_plcdata_sub.update(&plc_data))
 	{
-		unsigned char* buf = std::reinterpret_cast<unsigned char*>(&plc_data.power_request);
-		Send_Can_Msg = PackgeCanFrame(buf);
+		unsigned char* buf = reinterpret_cast<unsigned char*>(&plc_data.power_request);
+		PackgeCanFrame(Send_Can_Msg,buf);
 		udp->send(Send_Can_Msg,CanFrame_Len,CANNET_IP,CANNET_Port);
 	}
 
