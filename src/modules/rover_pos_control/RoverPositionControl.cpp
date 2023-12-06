@@ -560,7 +560,9 @@ RoverPositionControl::Run()
 		if (_control_mode.flag_control_velocity_enabled ||
 		    _control_mode.flag_control_attitude_enabled ||
 		    _control_mode.flag_control_position_enabled ||
-		    _control_mode.flag_control_manual_enabled) {
+		    _control_mode.flag_control_manual_enabled ||
+		    _custom_commander.drive_mode == MANUAL ||
+		    _custom_commander.drive_mode ==REMOTE) {
 			// timestamp and publish controls
 			_act_controls.timestamp = hrt_absolute_time();
 			_actuator_controls_pub.publish(_act_controls);

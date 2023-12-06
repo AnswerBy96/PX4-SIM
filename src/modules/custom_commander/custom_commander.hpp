@@ -8,12 +8,15 @@
  */
 #pragma once
 
+#include <px4_platform_common/events.h>
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
+#include "commander/px4_custom_mode.h"
+#include <systemlib/mavlink_log.h>
 
 #include <time.h>
 #include <termios.h>
@@ -25,6 +28,10 @@
 #include <uORB/topics/custom_commander.h>
 #include <uORB/topics/ui_to_px4_ignition.h>
 #include <uORB/topics/ui_to_px4_mode.h>
+#include <uORB/topics/vehicle_command.h>
+#include <uORB/topics/offboard_control_mode.h>
+#include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/mavlink_log.h>
 
 using namespace time_literals;
 
@@ -63,6 +70,11 @@ public:
 		REMOTE
 	};
 
+	enum ArmDisarm {
+		DISARM=0,
+		ARM
+	};
+
 	struct BoatStatus
 	{
 		bool isStart;			  // 0-> stop , 1 -> start
@@ -86,6 +98,9 @@ private:
 	custom_commander_s _custom_commander{};
 	ui_to_px4_ignition_s _ui2px4_ignition{};
 	ui_to_px4_mode_s _ui2px4_mode{};
+	vehicle_command_s _vehicle_command{};
+	offboard_control_mode_s _offboard_control_mode{};
+	vehicle_status_s _status;
 
 
 
@@ -93,13 +108,22 @@ private:
 	void gear_commander();
 
 	void cal_throttle_sheeringwheel();
+	void publish_offboard_control_mode(bool position=false,bool velocity=false,bool acceleration=false,bool attitude=false,bool body_rate=false,bool actuator=true);
+	void publish_vehicle_command(uint16_t command, float param1 = NAN, float param2 = NAN, float param3 = NAN);
+	void into_offboard_mode();
+	bool safety_check();
 
 	// Subscriptions
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
 	uORB::Subscription _ui2px4_ignition_sub{ORB_ID(ui_to_px4_ignition)};
 	uORB::Subscription _ui2px4_mode_sub{ORB_ID(ui_to_px4_mode)};
+	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	// uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	//Publication
 	uORB::Publication<custom_commander_s> _custom_commander_pub{ORB_ID(custom_commander)};
+	uORB::Publication<vehicle_command_s> _vehicle_command_pub{ORB_ID(vehicle_command)};
+	uORB::Publication<offboard_control_mode_s> _offboard_control_mode_pub{ORB_ID(offboard_control_mode)};
+
+	orb_advert_t _mavlink_log_pub{nullptr};
 };
