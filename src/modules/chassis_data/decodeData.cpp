@@ -81,3 +81,21 @@ void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 	chassisData.throttle = chassisData.throttle_left / 100.0f;
 	_orb_chassisData_pub.publish(chassisData);
 }
+
+void ChassisData::decodeThrottle_SMC196(unsigned char *data)
+{
+	chassisData.timestamp = hrt_absolute_time();
+	SteeringWheel sw;
+	if(data[7] > 0x64)
+	{
+		sw.angle = (float)(data[7] - 0xff);
+	}
+	else sw.angle = data[7];
+	sw.number_turns = data[1];
+	sw.dir_ = data[0] & 0x80;
+	sw.error_sensor1 = data[0]&0x20;
+	sw.error_sensor2 = data[0]&0x40;
+	chassisData.steeringwheel = sw.angle;
+	chassisData.have_steeringwheel = true;
+	_orb_chassisData_pub.publish(chassisData);
+}

@@ -78,7 +78,18 @@ void CustomCommander::cal_throttle_sheeringwheel()
 	}
 
 	if(_chassis_data.have_steeringwheel)	//如果有方向盘则转向信号使用方向盘，否则使用两个推杆的差
-		_custom_commander.target_steeringwheel = _chassis_data.steeringwheel;
+	{
+		if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)>=15)
+		{
+			_custom_commander.target_steeringwheel = (_chassis_data.throttle_left - _chassis_data.throttle_right) / 100.0f  + _chassis_data.steeringwheel/100.0f;
+			_custom_commander.target_steeringwheel = (_custom_commander.target_steeringwheel > 1.0f) ? 1.0f : _custom_commander.target_steeringwheel;
+			_custom_commander.target_steeringwheel = (_custom_commander.target_steeringwheel < -1.0f) ? -1.0f : _custom_commander.target_steeringwheel;
+			isUpdateThrottle = true;
+
+		}
+		//方向盘微调
+		else _custom_commander.target_steeringwheel = _chassis_data.steeringwheel / 100.0f;
+	}
 	else
 	{
 		if(abs(_chassis_data.throttle_left - _chassis_data.throttle_right)>=15)
@@ -219,6 +230,12 @@ void CustomCommander::Run()
 					"current drive_mode : manual");
 					_custom_commander.drive_mode = MANUAL;
 					break;
+				case AUTO:
+					_custom_commander.drive_mode = AUTO;
+					events::send(events::ID("drive_mode_auto"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : auto");
+					break;
 				case REMOTE:
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
@@ -230,12 +247,6 @@ void CustomCommander::Run()
 						"current drive_mode : remote");
 						break;
 					}
-					break;
-				case AUTO:
-					_custom_commander.drive_mode = AUTO;
-					events::send(events::ID("drive_mode_auto"),
-					{events::Log::Info, events::LogInternal::Info},
-					"current drive_mode : auto");
 					break;
 				default:
 					break;

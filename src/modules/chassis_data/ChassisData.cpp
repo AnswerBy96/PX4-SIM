@@ -123,7 +123,9 @@ void ChassisData::Run()
 			case SMC180_ID:
 				decodeThrottle_SMC180(eth_can.getRecvData());
 				break;
-
+			case SMC196_ID:
+				decodeThrottle_SMC196(eth_can.getRecvData());
+				break;
 			default:
 				break;
 		}

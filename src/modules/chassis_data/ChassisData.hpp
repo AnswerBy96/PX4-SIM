@@ -34,8 +34,19 @@
 #define THROTTLE 0x41
 
 #define SMC180_ID 0x00F8FFFF	//型号SMC180油门传感器的默认CANID
+#define SMC196_ID 0x0CFDD901	//型号SMC180油门传感器的默认CANID
 
 using namespace time_literals;
+
+typedef struct
+{
+	bool dir_;	//true 顺时针 ， false 逆时针
+	bool error_sensor1;	//传感器状态
+	bool error_sensor2;	//传感器状态
+	float angle;	// 小于0%的用0xff减去读到的数值
+	unsigned char number_turns;	//转动的圈数
+	float sync_angle;	//舵角同步
+}SteeringWheel;
 
 class ChassisData : public ModuleBase<ChassisData>, public ModuleParams, public px4::ScheduledWorkItem
 {
@@ -60,6 +71,7 @@ public:
 
 	float decodeSteerWheel(unsigned char* data);
 	void decodeThrottle_SMC180(unsigned char* data);
+	void decodeThrottle_SMC196(unsigned char *data);
 	uint16_t crcCheck(unsigned char* pendBuffer);
 
 
