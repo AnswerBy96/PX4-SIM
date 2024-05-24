@@ -1,3 +1,11 @@
+###
+ # @Descripttion:
+ # @version:
+ # @Author: chenjw
+ # @Date: 2023-11-27 18:33:55
+ # @LastEditors: rsj
+ # @LastEditTime: 2024-05-10 19:39:53
+###
 #!/bin/sh
 #
 # board specific defaults
@@ -21,3 +29,5 @@ safety_button start
 chassis_data start
 custom_commander start
 eboat_mavlink start
+plc_connection_px4     start
+motor_driver start

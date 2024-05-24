@@ -1,0 +1,5 @@
+menuconfig MODULES_PLC_CONNECTION_PX4
+	bool "plc_connection_px4"
+	default n
+	---help---
+		Enable support for plc_connection_px4

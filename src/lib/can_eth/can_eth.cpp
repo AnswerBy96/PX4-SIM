@@ -4,7 +4,7 @@
  */
 #include "can_eth.h"
 
-void CanEth::CanToEth(unsigned char* message)
+void CanEth::EthToCan(unsigned char* message)
 {
 	frameID = (message[0] & 0x80) > 0;
 	dataLen = message[0] & 0x0f;
@@ -18,13 +18,13 @@ void CanEth::CanToEth(unsigned char* message)
 }
 
 /**
- * ETH数据转换为CAN数据，message len 8 bytes
+ * CAN数据转换为Eth数据，message len 8 bytes
  * @param 1: 要发送的数据buffer，不超过8个字节
  * @param 2: 该帧数据的CANID
  * @param 3: 数据大小，不超过8个字节
  *
  */
-void CanEth::EthToCan(unsigned char* message , uint32_t sendID , u_char datalen)
+void CanEth::CanToEth(unsigned char* message , uint32_t sendID , u_char datalen)
 {
 	if (datalen>8)	return;		//CAN一帧最多8个字节数据
 	memset(sendData,0,sizeof(sendData));

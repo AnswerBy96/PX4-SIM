@@ -116,7 +116,7 @@ void ChassisData::Run()
 
 	if(udp->receive(recvCANbuffer,sizeof(recvCANbuffer)))
 	{
-		eth_can.CanToEth(recvCANbuffer);
+		eth_can.EthToCan(recvCANbuffer);
 		CanID = eth_can.getRecvID();
 		switch (CanID)
 		{

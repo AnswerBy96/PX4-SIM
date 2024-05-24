@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-12-04 03:57:49
  * @LastEditors: rsj
- * @LastEditTime: 2023-12-06 02:53:24
+ * @LastEditTime: 2024-05-22 20:24:30
  */
 #pragma once
 
@@ -35,23 +35,25 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/parameter_update.h>
-#include <uORB/topics/plc_data.h>
+#include <uORB/topics/plc_to_px4.h>
+#include <uORB/topics/px4_to_plc.h>
 
-#define udpServer_port 4500		//本地端口
+#define udpServer_port 4700		//本地端口
 
-#define CANNET_IP "192.168.0.101"
-#define CANNET_Port 4501
-#define CanFrame_Len 13
+#define CANNET_IP "192.168.0.102"
+#define CANNET_Port 4701
+#define EthFrame_Len 13
+#define CanFrame_Len 8
 #define PLC_CANID 0xC9
 #define PX4_CANID 0x65
 
 using namespace time_literals;
 
-class PlcData : public ModuleBase<PlcData>, public ModuleParams, public px4::ScheduledWorkItem
+class PlcConnectionPx4 : public ModuleBase<PlcConnectionPx4>, public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
-	PlcData();
-	~PlcData() override;
+	PlcConnectionPx4();
+	~PlcConnectionPx4() override;
 
 	/** @see ModuleBase */
 	static int task_spawn(int argc, char *argv[]);
@@ -68,32 +70,27 @@ public:
 
 	void parameters_update(bool force);
 
-
-	uint16_t crcCheck(unsigned char* pendBuffer);
-
-	void PackgeCanFrame(unsigned char* src,unsigned char* buf);
-	void DecodePlcData(unsigned char* buf);
+	void DecodePlcConnectionPx4(unsigned char* buf);
 
 
 private:
 	void Run() override;
 
 	char* uartPortName=(char *)"/dev/ttyS4";
-	unsigned char recvCANbuffer[CanFrame_Len];
+	unsigned char recvCANbuffer[EthFrame_Len];
 
 	bool isInit{false};
 	uint32_t CanID;
 
-	plc_data_s plc_data;
+	px4_to_plc_s px4_to_plc_;
+	plc_to_px4_s plc_to_px4_;
+
 
 	UdpSocket* udp;
-	Uart* uart;
 	CanEth eth_can;
 
 	unsigned char Send_Can_Msg[CanFrame_Len];
 
-	// Publications
-	uORB::Publication<plc_data_s> _orb_plcdata_pub{ORB_ID(plc_data)};
 
 	// Performance (perf) counters
 	perf_counter_t	_loop_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
@@ -107,7 +104,10 @@ private:
 		(ParamInt<px4::params::MAX_THROTTLE>) _param_max_throttle
 	)
 
+	//Publications
+	uORB::Publication<plc_to_px4_s> plc_to_px4_pub{ORB_ID(plc_to_px4)};
+
 	// Subscriptions
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
-	uORB::Subscription         _orb_plcdata_sub{ORB_ID(plc_data)};
+	uORB::Subscription         px4_to_plc_sub{ORB_ID(px4_to_plc)};
 };

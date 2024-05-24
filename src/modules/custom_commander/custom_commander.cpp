@@ -203,7 +203,7 @@ void CustomCommander::Run()
 		exit_and_cleanup();
 		return;
 	}
-	PX4_INFO("CustomCommander");
+	//PX4_INFO("CustomCommander");
 	if(_ui2px4_ignition_sub.update(&_ui2px4_ignition))
 	{
 		_custom_commander.system_start = _ui2px4_ignition.control_start_stop;
@@ -239,15 +239,15 @@ void CustomCommander::Run()
 				case REMOTE:
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
-					if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
-					{
+					//if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
+					//{
 						_custom_commander.drive_mode = REMOTE;
 						events::send(events::ID("drive_mode_remote"),
 						{events::Log::Info, events::LogInternal::Info},
 						"current drive_mode : remote");
 						break;
-					}
-					break;
+					//}
+					//break;
 				default:
 					break;
 			}

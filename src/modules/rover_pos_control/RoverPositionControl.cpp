@@ -137,7 +137,6 @@ RoverPositionControl::manual_control_setpoint_poll()
 							const float vehicle_yaw = Eulerf(Quatf(_vehicle_att.q)).psi();
 							_manual_yaw_sp = vehicle_yaw;
 							_reset_yaw_sp = false;
-
 						} else {
 							const float yaw_rate = math::radians(_param_gnd_man_y_max.get());
 							_att_sp.yaw_sp_move_rate = _manual_control_setpoint.y * yaw_rate;

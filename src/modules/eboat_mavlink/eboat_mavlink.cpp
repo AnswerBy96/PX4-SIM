@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:06:28
  * @LastEditors: rsj
- * @LastEditTime: 2023-11-21 18:48:46
+ * @LastEditTime: 2024-05-22 22:16:19
  */
 #include "eboat_mavlink.hpp"
 
@@ -25,7 +25,7 @@ eboat_mavlink::~eboat_mavlink()
 bool eboat_mavlink::init()
 {
 	// alternatively, Run on fixed interval
-	ScheduleOnInterval(100000_us); // 2000 us interval, 200 Hz rate
+	ScheduleOnInterval(20000_us); // 2000 us interval, 200 Hz rate
 
 	return true;
 }
@@ -38,7 +38,6 @@ void eboat_mavlink::Run()
 		return;
 	}
 
-    px4_to_ui_.timestamp = hrt_absolute_time();
 
     //eboat_speed & eboat_direction
     if (vehicle_local_position_sub.update(&vehicle_local_position_))
@@ -48,8 +47,10 @@ void eboat_mavlink::Run()
         const Dcmf R_to_body(matrix::Quatf(vehicle_attitude_.q).inversed());
         const  matrix::Vector3f vel = R_to_body * matrix::Vector3f(ground_speed(0), ground_speed(1), ground_speed(2));
         const float x_vel = vel(0);
+	// m/s -> mph
+	float x_mph = x_vel * 2.23694;
 
-        px4_to_ui_.eboat_speed = x_vel;
+        px4_to_ui_.eboat_speed = x_mph;
         px4_to_ui_.eboat_heading = (vehicle_local_position_.heading >= 0) ? (vehicle_local_position_.heading / M_PI * 180.0f) : (360.0f + vehicle_local_position_.heading / M_PI * 180.0f);
 
     }
@@ -75,7 +76,7 @@ void eboat_mavlink::Run()
 //     px4_to_ui_.eboat_speed = 5;
 //     px4_to_ui_.eboat_heading = 100;
 //     px4_to_ui_.gear = 1;
-
+    px4_to_ui_.timestamp = hrt_absolute_time();
     eboat_mavlink_pub.publish(px4_to_ui_);
 
 

@@ -1,5 +1,0 @@
-menuconfig MODULES_PLC_DATA
-	bool "plc_data"
-	default n
-	---help---
-		Enable support for plc_data

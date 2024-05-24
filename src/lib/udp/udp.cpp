@@ -1,3 +1,11 @@
+/*
+ * @Descripttion:
+ * @version:
+ * @Author: chenjw
+ * @Date: 2023-11-08 03:28:02
+ * @LastEditors: rsj
+ * @LastEditTime: 2024-05-15 23:54:04
+ */
 /**
  * @file udp_client.cpp
  *
@@ -6,7 +14,7 @@
 
 UdpSocket::UdpSocket(int port) {
 	// 创建socket
-	sockfd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	sockfd = socket(AF_INET,SOCK_DGRAM,0);
 	if (sockfd < 0) {
 		printf("create socket failed!!\n");
 		return;
@@ -27,7 +35,7 @@ UdpSocket::UdpSocket(int port) {
 
 	// 绑定socket到本地地址
 	if (bind(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
-		printf("bind socket failed!!\n");
+		//printf("bind socket failed!!\n");
 		return;
 	}
 }
@@ -50,7 +58,7 @@ bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int 
 
 	// 发送数据
 	if (sendto(sockfd, message, msg_len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0) {
-		printf("send data failed!!\n");
+		//printf("send data failed!!\n");
 		return false;
 	}
 		return true;
@@ -64,10 +72,12 @@ bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int 
  */
 bool UdpSocket::receive(void* message , size_t msg_len) {
 	socklen_t addrlen = sizeof(client_addr);
+	char ipbuf[64];
 	// 接收数据
 	if (recvfrom(sockfd, message, msg_len, 0, (struct sockaddr*) &client_addr, &addrlen) < 0) {
-		printf("receive data failed!!\n");
-		return false;
-	}
+        // printf("Recive data Fail !!! - 客户端的IP地址: %s, 端口: %d\n",
+        //        inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, ipbuf, sizeof(ipbuf)),
+        //        ntohs(client_addr.sin_port));
+	 }
 	return true;
 }

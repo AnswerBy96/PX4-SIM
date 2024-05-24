@@ -1,3 +1,11 @@
+/*
+ * @Descripttion:
+ * @version:
+ * @Author: chenjw
+ * @Date: 2023-11-08 03:28:02
+ * @LastEditors: rsj
+ * @LastEditTime: 2024-05-09 19:21:26
+ */
 /**
  * @file can_eth.h
  *
@@ -28,10 +36,10 @@ public:
         ~CanEth(){}
 
 
-        //CAN设备数据转换为ETH数据，message len 13 bytes
-        void CanToEth(unsigned char* message);
-        //ETH数据转换为CAN数据，message len 8 bytes
-        void EthToCan(unsigned char* message , uint32_t sendID , u_char datalen);
+        //将转换器（CAN->Eth）转换后的Eth数据解析为Can数据，message len 13 bytes
+        void EthToCan(unsigned char* message);
+        //将Can数据转换成Eth数据后通过转换器(Eth->CAN)发出，message len 8 bytes
+        void CanToEth(unsigned char* message , uint32_t sendID , u_char datalen);
 
         uint32_t getRecvID(){return recvID;}
 
