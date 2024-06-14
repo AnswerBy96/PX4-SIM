@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-12-04 03:57:49
  * @LastEditors: rsj
- * @LastEditTime: 2024-05-22 20:24:30
+ * @LastEditTime: 2024-06-13 18:52:36
  */
 #pragma once
 
@@ -18,6 +18,7 @@
 #include <drivers/drv_hrt.h>
 #include <lib/perf/perf_counter.h>
 #include <lib/udp/udp.h>
+#include <lib/tcp/tcp.h>
 #include <lib/uart/uart.h>
 #include <lib/can_eth/can_eth.h>
 
@@ -38,14 +39,15 @@
 #include <uORB/topics/plc_to_px4.h>
 #include <uORB/topics/px4_to_plc.h>
 
-#define udpServer_port 4700		//本地端口
+#define Px4_Port 4700		//本地端口
 
-#define CANNET_IP "192.168.0.102"
-#define CANNET_Port 4701
-#define EthFrame_Len 13
+#define PLC_IP "192.168.0.2"
+#define PLC_Port 4701
+#define UdpFrame_Len 8
 #define CanFrame_Len 8
-#define PLC_CANID 0xC9
-#define PX4_CANID 0x65
+#define EthFrame_Len  13
+#define PLC_ID 0xC9
+#define PX4_ID 0x65
 
 using namespace time_literals;
 
@@ -68,7 +70,6 @@ public:
 
 	int print_status() override;
 
-	void parameters_update(bool force);
 
 	void DecodePlcConnectionPx4(unsigned char* buf);
 
@@ -78,6 +79,7 @@ private:
 
 	char* uartPortName=(char *)"/dev/ttyS4";
 	unsigned char recvCANbuffer[EthFrame_Len];
+	unsigned char recvUdpbuffer[8] = {0};
 
 	bool isInit{false};
 	uint32_t CanID;
@@ -86,7 +88,8 @@ private:
 	plc_to_px4_s plc_to_px4_;
 
 
-	UdpSocket* udp;
+	//TcpSocket* tcp_;
+	UdpSocket* udp_;
 	CanEth eth_can;
 
 	unsigned char Send_Can_Msg[CanFrame_Len];

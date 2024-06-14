@@ -40,4 +40,5 @@ px4_add_module(
 		px4_work_queue
 		udp
 		can_eth
+		can_communication
 	)

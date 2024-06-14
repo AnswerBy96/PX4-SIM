@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:06:36
  * @LastEditors: rsj
- * @LastEditTime: 2024-05-10 23:43:25
+ * @LastEditTime: 2024-05-27 23:49:07
  */
 #pragma once
 
@@ -17,6 +17,7 @@
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/custom_commander.h>
+#include <uORB/topics/motor_state.h>
 
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
@@ -60,11 +61,16 @@ private:
     vehicle_local_position_s vehicle_local_position_;
     vehicle_attitude_s vehicle_attitude_;
     custom_commander_s custom_commander_;
+    motor_state_s      motor_state_;
 
     // Subscriptions
     uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
     uORB::Subscription vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
     uORB::Subscription vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
     uORB::Subscription custom_commander_sub{ORB_ID(custom_commander)};
+    uORB::Subscription motor_state_sub{ORB_ID(motor_state)};
+
+
+
     uORB::Publication<px4_to_ui_s>	eboat_mavlink_pub{ORB_ID(px4_to_ui)};
 };

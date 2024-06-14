@@ -62,11 +62,14 @@ void eboat_mavlink::Run()
     }
 
     //motor speed and direction
-       px4_to_ui_.motor1_speed = 10;
-       px4_to_ui_.motor2_speed = 10;
+    if(motor_state_sub.update(&motor_state_))
+    {
+	px4_to_ui_.motor1_speed = motor_state_.motor1_speed;
+       	px4_to_ui_.motor2_speed = motor_state_.motor2_speed;
 
-       px4_to_ui_.motor1_direction = 0;
-       px4_to_ui_.motor2_direction = 0;
+	px4_to_ui_.motor1_direction = motor_state_.motor1_direction;
+	px4_to_ui_.motor2_direction = motor_state_.motor2_direction;
+    }
 
 // Test
 //     px4_to_ui_.motor1_speed = 10;

@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-08 03:28:02
  * @LastEditors: rsj
- * @LastEditTime: 2024-05-15 23:54:04
+ * @LastEditTime: 2024-06-04 04:36:05
  */
 /**
  * @file udp_client.cpp
@@ -72,7 +72,6 @@ bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int 
  */
 bool UdpSocket::receive(void* message , size_t msg_len) {
 	socklen_t addrlen = sizeof(client_addr);
-	char ipbuf[64];
 	// 接收数据
 	if (recvfrom(sockfd, message, msg_len, 0, (struct sockaddr*) &client_addr, &addrlen) < 0) {
         // printf("Recive data Fail !!! - 客户端的IP地址: %s, 端口: %d\n",

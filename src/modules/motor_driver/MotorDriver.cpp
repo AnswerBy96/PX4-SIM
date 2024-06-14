@@ -4,23 +4,23 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:06:28
  * @LastEditors: rsj
- * @LastEditTime: 2024-05-23 18:39:59
+ * @LastEditTime: 2024-06-13 02:50:16
  */
 #include "MotorDriver.hpp"
 
 MotorDriver::MotorDriver() :
 	ModuleParams(nullptr),
-	udp(nullptr),
-	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::plc_px4),
+	udp_(nullptr)
 {
-
+	last_power_request_ = 0;
 }
 
 MotorDriver::~MotorDriver()
 {
 	isInit = false;
-	udp = nullptr;
-	delete udp;
+	udp_ = nullptr;
+	delete udp_;
 	perf_free(_loop_perf);
 	perf_free(_loop_interval_perf);
 }
@@ -28,27 +28,25 @@ MotorDriver::~MotorDriver()
 bool MotorDriver::init()
 {
 	// alternatively, Run on fixed interval
-	ScheduleOnInterval(20000_us); // 2000 us interval, 200 Hz rate
+	ScheduleOnInterval(20000_us);
 
 	return true;
 }
 
-void MotorDriver::SendSDOMsg(unsigned char nodeid,unsigned short objIndex,
-                             unsigned char subIndex,int16_t value)
+void MotorDriver::GetMotorSpeed(uint32_t &motorspeed,unsigned char * data)
 {
-	unsigned char msg[8];
-        msg[0] = 0x2B;
-        msg[1] = objIndex & 0xff;
-        msg[2] = (objIndex >> 8) & 0xff;
-        msg[3] = subIndex;
-        msg[4] = value & 0xff;
-        msg[5] = (value >> 8) & 0xff;
-        msg[6] = (value >> 16) & 0xff;
-        msg[7] = (value >> 24) & 0xff;
-
-	uint32_t can_id = identifier_sendsdo + nodeid;
-	can_eth.CanToEth(msg,can_id,can_length);
-	udp->send(can_eth.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+	if(data[0] == 0x40)
+	{
+		if(data[1] == 0x0A && data[2] == 0x21)
+		{
+			std::memcpy(&motorspeed,data + 4,sizeof(uint32_t));
+		}
+	}
+	else
+	{
+		//读取失败
+		return;
+	}
 }
 
 void MotorDriver::Run()
@@ -62,30 +60,117 @@ void MotorDriver::Run()
 	if(!isInit)
 	{
 		isInit = true;
-		udp = new UdpSocket(udpServer_port);
+		udp_ = new UdpSocket(udpServer_port);
 	}
 
-	if(actuator_motors_sub.update(&actuator_motors_))
+	custom_commander_sub.update(&custom_commander_);
+
+	if(((custom_commander_.drive_mode == DriveMode::MANUAL&&
+	(custom_commander_.current_gear == Gear::GEAR_D )||
+	(custom_commander_.current_gear == Gear::GEAR_R )) ||
+	(custom_commander_.drive_mode == DriveMode::REMOTE) ||
+	(custom_commander_.drive_mode == DriveMode::AUTO)) && (actuator_motors_sub.update(&actuator_motors_)))
 	{
 		//(-1,1) -> (-1000,1000)
-		motor_pwm_ = actuator_motors_.control[0] * 1000;
+		motor1_pwm_ = actuator_motors_.control[0] * 1000;
+		motor2_pwm_ = actuator_motors_.control[1] * 1000;
 
 		//motor_pwm根据标定结果转换为功率
-		px4_to_plc_.power_request = 100;
-		px4_to_plc_.timestamp = hrt_absolute_time();
+		if(motor1_pwm_ < 50)
+		{
+			motor1_pwm_ = 0;
+			motor1_power_ = 0;
+		}
+		else
+		{
+			motor1_power_ = GET_MOTOR_POWER(motor1_pwm_);
+		}
 
-		px4_to_plc_pub.publish(px4_to_plc_);
+		if(motor2_pwm_ < 50)
+		{
+			motor2_pwm_ = 0;
+			motor2_power_ = 0;
+		}
+		else
+		{
+			motor2_power_ = GET_MOTOR_POWER(motor2_pwm_);
+		}
 
-		udp->receive(recvCANbuffer,sizeof(recvCANbuffer));
 
+		px4_to_plc_.power_request = motor1_power_ + motor2_power_;
 
+		if(last_power_request_ != px4_to_plc_.power_request)
+		{
+			last_power_request_ = px4_to_plc_.power_request;
+			px4_to_plc_.timestamp = hrt_absolute_time();
+			printf("power_request : %f\n",px4_to_plc_.power_request);
+			px4_to_plc_pub.publish(px4_to_plc_);
+		}
+
+		//收到PLC降额指令
 		if(plc_to_px4_sub.update(&plc_to_px4_))
 		{
-			motor_pwm_ = motor_pwm_ * plc_to_px4_.derating_ratio;
-			SendSDOMsg(leftmotor_nodeid,INDEX_ADDR_Motor_Control,SUB_INDEX_ADDR_Motor_Control,(int16_t)motor_pwm_);
-		}
-	}
+			motor1_pwm_ = motor1_pwm_ * plc_to_px4_.derating_ratio;
+			canframe_ = canopen_motor_.PackageSdo(motor1_nodeid,INDEX_ADDR_Motor_Control,SUB_INDEX_ADDR_Motor_Control,(int16_t)motor1_pwm_);
+			can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+			udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
 
+			motor2_pwm_ = motor2_pwm_ * plc_to_px4_.derating_ratio;
+			canframe_ = canopen_motor_.PackageSdo(motor2_nodeid,INDEX_ADDR_Motor_Control,SUB_INDEX_ADDR_Motor_Control,(int16_t)motor2_pwm_);
+			can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+			udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+		}
+
+		//获取电机方向
+		if(actuator_motors_.control[0] < 0)
+		{
+			motor_state_.motor1_direction = 1;
+		}
+		else
+		{
+			motor_state_.motor1_direction = 0;
+		}
+
+		if(actuator_motors_.control[1] < 0)
+		{
+			motor_state_.motor2_direction = 1;
+		}
+		else
+		{
+			motor_state_.motor2_direction = 0;
+		}
+
+		//获取电机转速
+		// canframe_ = canopen_motor_.PackageSdo(motor1_nodeid,INDEX_ADDR_Motor_Speed,SUB_INDEX_ADDR_Motor_Speed,0);
+		// can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+		// udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+
+		// canframe_ = canopen_motor_.PackageSdo(motor2_nodeid,INDEX_ADDR_Motor_Speed,SUB_INDEX_ADDR_Motor_Speed,0);
+		// can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+		// udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+
+		// if(udp_->receive(recvCANbuffer,sizeof(recvCANbuffer)))
+		// {
+		// 	can_eth_.EthToCan(recvCANbuffer);
+
+		// 	switch (can_eth_.getRecvID())
+		// 	{
+		// 		case(identifier_recvsdo + motor1_nodeid):
+		// 			GetMotorSpeed(motor_state_.motor1_speed,can_eth_.getRecvData());
+		// 			break;
+
+		// 		case(identifier_recvsdo + motor2_nodeid):
+		// 			GetMotorSpeed(motor_state_.motor2_speed,can_eth_.getRecvData());
+		// 			break;
+
+		// 		default:
+		// 			break;
+		// 	}
+		// }
+
+		motor_state_pub.publish(motor_state_);
+	}
+	udp_->receive(recvCANbuffer,sizeof(recvCANbuffer));
 }
 
 int MotorDriver::task_spawn(int argc, char *argv[])

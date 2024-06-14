@@ -7,6 +7,6 @@ px4_add_module(
 	DEPENDS
 		px4_work_queue
 		udp
+		tcp
 		can_eth
-		uart
 	)

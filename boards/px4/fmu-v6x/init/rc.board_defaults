@@ -25,9 +25,8 @@ param set-default SENS_EN_INA228 0
 param set-default SENS_EN_INA226 1
 
 safety_button start
-
 chassis_data start
 custom_commander start
 eboat_mavlink start
-plc_connection_px4     start
 motor_driver start
+plc_connection_px4 start

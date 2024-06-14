@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-09 18:56:46
  * @LastEditors: rsj
- * @LastEditTime: 2023-11-19 18:19:49
+ * @LastEditTime: 2024-06-02 20:29:49
  */
 #pragma once
 
@@ -35,6 +35,32 @@
 
 using namespace time_literals;
 
+enum Gear {
+	GEAR_P = 0,
+	GEAR_N = 1,
+	GEAR_R = 2,
+	GEAR_D = 3
+};
+
+enum DriveMode {
+	MANUAL = 0,
+	AUTO,
+	REMOTE
+};
+
+enum ArmDisarm {
+	DISARM=0,
+	ARM
+};
+
+struct BoatStatus
+{
+	bool isStart;			  // 0-> stop , 1 -> start
+	uint8_t throttleGear;	//0 -> P , 1 -> N , 2 -> R , 3 -> D	 		 当前油门传感器档位
+	uint8_t commanderGear;	//0 -> P , 1 -> N , 2 -> R , 3 -> D	        状态机输出的目标档位
+	uint8_t driveMode;	// 0 -> auto , 1 -> maunal
+};
+
 
 class CustomCommander : public ModuleBase<CustomCommander>, public ModuleParams, public px4::ScheduledWorkItem
 {
@@ -56,32 +82,6 @@ public:
 	int print_status() override;
 
 	// void parameters_update(bool force);
-
-	enum Gear {
-		GEAR_P = 0,
-		GEAR_N = 1,
-		GEAR_R = 2,
-		GEAR_D = 3
-	};
-
-	enum DriveMode {
-		MANUAL = 0,
-		AUTO,
-		REMOTE
-	};
-
-	enum ArmDisarm {
-		DISARM=0,
-		ARM
-	};
-
-	struct BoatStatus
-	{
-		bool isStart;			  // 0-> stop , 1 -> start
-		uint8_t throttleGear;	//0 -> P , 1 -> N , 2 -> R , 3 -> D	 		 当前油门传感器档位
-		uint8_t commanderGear;	//0 -> P , 1 -> N , 2 -> R , 3 -> D	        状态机输出的目标档位
-		uint8_t driveMode;	// 0 -> auto , 1 -> maunal
-	}boat_status;
 
 private:
 	void Run() override;

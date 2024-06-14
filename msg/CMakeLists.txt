@@ -115,6 +115,7 @@ set(msg_files
 	mission.msg
 	mission_result.msg
 	mount_orientation.msg
+	motor_state.msg
 	navigator_mission_item.msg
 	npfg_status.msg
 	obstacle_distance.msg

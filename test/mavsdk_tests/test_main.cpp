@@ -111,7 +111,7 @@ void usage(const std::string &bin_name)
 		  << "Usage : " << bin_name << " [--url CONNECTION_URL] [--speed-factor SPEED_FACTOR] [catch2 arguments]\n"
 		  << "\n"
 		  << "  --url          Connection URL format should be :\n"
-		  << "                   For TCP : tcp://[server_host][:server_port]\n"
+		  << "                   For  : tcp://[server_host][:server_port]\n"
 		  << "                   For UDP : udp://[bind_host][:bind_port]\n"
 		  << "                   For Serial : serial:///path/to/serial/dev[:baudrate]\n"
 		  << "                 For example, to connect to the simulator use URL: udp://:14540\n"
