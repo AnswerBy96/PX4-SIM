@@ -120,6 +120,16 @@ void MotorDriver::Run()
 			can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
 			udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
 		}
+		else
+		{
+			canframe_ = canopen_motor_.PackageSdo(motor1_nodeid,INDEX_ADDR_Motor_Control,SUB_INDEX_ADDR_Motor_Control,(int16_t)motor1_pwm_);
+			can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+			udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+
+			canframe_ = canopen_motor_.PackageSdo(motor2_nodeid,INDEX_ADDR_Motor_Control,SUB_INDEX_ADDR_Motor_Control,(int16_t)motor2_pwm_);
+			can_eth_.CanToEth(canframe_.data,canframe_.can_id,canframe_.can_dlc);
+			udp_->send(can_eth_.getSendData(),eth_length,udpTarget_ip,udpTarget_port);
+		}
 
 		//获取电机方向
 		if(actuator_motors_.control[0] < 0)

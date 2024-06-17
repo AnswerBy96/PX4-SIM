@@ -4,7 +4,7 @@
  * @Author: rsj
  * @Date: 2024-05-09 01:24:06
  * @LastEditors: rsj
- * @LastEditTime: 2024-06-03 23:53:03
+ * @LastEditTime: 2024-06-16 20:25:44
  */
 #pragma once
 
@@ -73,7 +73,6 @@ private:
 	void GetMotorSpeed(uint32_t &motorspeed,unsigned char * data);
 	bool isInit{false};
 	unsigned char recvCANbuffer[13];
-	unsigned char CanData[8];
 
 
 	UdpSocket* udp_;
