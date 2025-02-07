@@ -3093,6 +3093,8 @@ MavlinkReceiver::handle_message_ui_to_px4_mode(mavlink_message_t *msg)
 	_ui_to_px4_mode.timestamp = hrt_absolute_time();
 	_ui_to_px4_mode.mode = ui_to_px4_mode_msg.mode;
 
+	//PX4_INFO("ui_to_px4_mode : %d",_ui_to_px4_mode.mode);
+
 	_eboat_mavlink_mode_pub.publish(_ui_to_px4_mode);
 }
 
@@ -3105,6 +3107,8 @@ MavlinkReceiver::handle_message_ui_to_px4_ignition(mavlink_message_t *msg)
 
 	_ui_to_px4_ignition.timestamp = hrt_absolute_time();
 	_ui_to_px4_ignition.control_start_stop = ui_to_px4_ignition_msg.control_start_stop;
+
+	//PX4_INFO("ui_to_px4_ignition : %d",_ui_to_px4_ignition.control_start_stop);
 
 	_eboat_mavlink_ignition_pub.publish(_ui_to_px4_ignition);
 

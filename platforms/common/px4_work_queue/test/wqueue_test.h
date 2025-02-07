@@ -1,3 +1,11 @@
+/*
+ * @Descripttion:
+ * @version:
+ * @Author: rsj
+ * @Date: 2023-10-30 19:12:04
+ * @LastEditors: rsj
+ * @LastEditTime: 2025-02-06 23:10:02
+ */
 /****************************************************************************
  *
  *   Copyright (c) 2019 PX4 Development Team. All rights reserved.
@@ -42,7 +50,7 @@ using namespace px4;
 class WQueueTest : public px4::WorkItem
 {
 public:
-	WQueueTest() : px4::WorkItem("WQueueTest", px4::wq_configurations::test1) {}
+	WQueueTest() : px4::WorkItem("WQueueTest", px4::wq_configurations::test2) {}
 	~WQueueTest() = default;
 
 	int main();

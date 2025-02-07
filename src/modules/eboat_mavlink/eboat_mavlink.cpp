@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:06:28
  * @LastEditors: rsj
- * @LastEditTime: 2024-05-22 22:16:19
+ * @LastEditTime: 2025-02-06 00:57:14
  */
 #include "eboat_mavlink.hpp"
 
@@ -62,24 +62,26 @@ void eboat_mavlink::Run()
     }
 
     //motor speed and direction
-    if(motor_state_sub.update(&motor_state_))
-    {
-	px4_to_ui_.motor1_speed = motor_state_.motor1_speed;
-       	px4_to_ui_.motor2_speed = motor_state_.motor2_speed;
+//     if(motor_state_sub.update(&motor_state_))
+//     {
+// 	px4_to_ui_.motor1_speed = motor_state_.motor1_speed;
+//        	px4_to_ui_.motor2_speed = motor_state_.motor2_speed;
 
-	px4_to_ui_.motor1_direction = motor_state_.motor1_direction;
-	px4_to_ui_.motor2_direction = motor_state_.motor2_direction;
-    }
+// 	px4_to_ui_.motor1_direction = motor_state_.motor1_direction;
+// 	px4_to_ui_.motor2_direction = motor_state_.motor2_direction;
+//     }
 
 // Test
 //     px4_to_ui_.motor1_speed = 10;
 //     px4_to_ui_.motor2_speed = 10;
 //     px4_to_ui_.motor1_direction = 1;
 //     px4_to_ui_.motor2_direction = 0;
-//     px4_to_ui_.eboat_speed = 5;
-//     px4_to_ui_.eboat_heading = 100;
-//     px4_to_ui_.gear = 1;
+    px4_to_ui_.eboat_speed = 50;
+    px4_to_ui_.eboat_heading = 50;
+    px4_to_ui_.gear = 1;
     px4_to_ui_.timestamp = hrt_absolute_time();
+
+    //PX4_INFO("px4_to_ui_.eboat_speed : %f",px4_to_ui_.eboat_speed);
     eboat_mavlink_pub.publish(px4_to_ui_);
 
 

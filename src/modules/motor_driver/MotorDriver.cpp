@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:06:28
  * @LastEditors: rsj
- * @LastEditTime: 2024-06-13 02:50:16
+ * @LastEditTime: 2025-01-20 00:29:01
  */
 #include "MotorDriver.hpp"
 
@@ -132,23 +132,23 @@ void MotorDriver::Run()
 		}
 
 		//获取电机方向
-		if(actuator_motors_.control[0] < 0)
-		{
-			motor_state_.motor1_direction = 1;
-		}
-		else
-		{
-			motor_state_.motor1_direction = 0;
-		}
+		// if(actuator_motors_.control[0] < 0)
+		// {
+		// 	motor_state_.motor1_direction = 1;
+		// }
+		// else
+		// {
+		// 	motor_state_.motor1_direction = 0;
+		// }
 
-		if(actuator_motors_.control[1] < 0)
-		{
-			motor_state_.motor2_direction = 1;
-		}
-		else
-		{
-			motor_state_.motor2_direction = 0;
-		}
+		// if(actuator_motors_.control[1] < 0)
+		// {
+		// 	motor_state_.motor2_direction = 1;
+		// }
+		// else
+		// {
+		// 	motor_state_.motor2_direction = 0;
+		// }
 
 		//获取电机转速
 		// canframe_ = canopen_motor_.PackageSdo(motor1_nodeid,INDEX_ADDR_Motor_Speed,SUB_INDEX_ADDR_Motor_Speed,0);
@@ -178,7 +178,7 @@ void MotorDriver::Run()
 		// 	}
 		// }
 
-		motor_state_pub.publish(motor_state_);
+		//motor_state_pub.publish(motor_state_);
 	}
 	udp_->receive(recvCANbuffer,sizeof(recvCANbuffer));
 }

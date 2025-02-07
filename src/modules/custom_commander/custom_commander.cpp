@@ -207,6 +207,7 @@ void CustomCommander::Run()
 	if(_ui2px4_ignition_sub.update(&_ui2px4_ignition))
 	{
 		_custom_commander.system_start = _ui2px4_ignition.control_start_stop;
+		// PX4_INFO("_custom_commander.system_start : %d",_custom_commander.system_start);
 	}
 
 	if(_custom_commander.system_start == true)	//总开关打开后才执行以下动作
@@ -221,6 +222,7 @@ void CustomCommander::Run()
 		}
 		if(_ui2px4_mode_sub.update(&_ui2px4_mode))
 		{
+			//PX4_INFO("_ui2px4_mode : %d",_ui2px4_mode.mode);
 			_vehicle_status_sub.update(&_status);
 			switch (_ui2px4_mode.mode)
 			{
@@ -229,6 +231,7 @@ void CustomCommander::Run()
 					{events::Log::Info, events::LogInternal::Info},
 					"current drive_mode : manual");
 					_custom_commander.drive_mode = MANUAL;
+					into_offboard_mode();	//MANUAL模式时进入offboard模式
 					break;
 				case AUTO:
 					_custom_commander.drive_mode = AUTO;
@@ -252,7 +255,6 @@ void CustomCommander::Run()
 					break;
 			}
 		}
-		into_offboard_mode();	//MANUAL模式时进入offboard模式
 	}
 	else{
 		_custom_commander.current_gear = GEAR_P;

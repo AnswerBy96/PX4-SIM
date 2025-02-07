@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-01 02:56:18
  * @LastEditors: rsj
- * @LastEditTime: 2023-11-20 22:22:13
+ * @LastEditTime: 2025-02-06 01:41:32
  */
 #ifndef EBOAT_MAVLINK_HPP
 #define EBOAT_MAVLINK_HPP
@@ -38,14 +38,15 @@ private:
 		if (eboat_mavlink_sub.update(&px4_to_ui_)) {
 			mavlink_px4_to_ui_t msg{};
 			msg.timestamp = px4_to_ui_.timestamp;
-			msg.motor1_speed = px4_to_ui_.motor1_speed;
-			msg.motor2_speed = px4_to_ui_.motor2_speed;
-			msg.motor1_direction = px4_to_ui_.motor1_direction;
-			msg.motor2_direction = px4_to_ui_.motor2_direction;
+			// msg.motor1_speed = px4_to_ui_.motor1_speed;
+			// msg.motor2_speed = px4_to_ui_.motor2_speed;
+			// msg.motor1_direction = px4_to_ui_.motor1_direction;
+			// msg.motor2_direction = px4_to_ui_.motor2_direction;
 			msg.eboat_speed = px4_to_ui_.eboat_speed;
 			msg.eboat_heading = px4_to_ui_.eboat_heading;
 			msg.gear = px4_to_ui_.gear;
 
+			//PX4_INFO("msg.eboat_speed : %f",msg.eboat_speed);
 			mavlink_msg_px4_to_ui_send_struct(_mavlink->get_channel(), &msg);
 			return true;
 		}

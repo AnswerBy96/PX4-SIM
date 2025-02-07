@@ -35,7 +35,7 @@
 
 WorkItemExample::WorkItemExample() :
 	ModuleParams(nullptr),
-	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::test1)
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::test2)
 {
 }
 

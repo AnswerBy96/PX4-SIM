@@ -4,7 +4,7 @@
  * @Author: chenjw
  * @Date: 2023-11-09 18:56:46
  * @LastEditors: rsj
- * @LastEditTime: 2024-06-02 20:29:49
+ * @LastEditTime: 2025-02-06 01:26:28
  */
 #pragma once
 
@@ -43,9 +43,12 @@ enum Gear {
 };
 
 enum DriveMode {
-	MANUAL = 0,
+	IDLE = 0,
 	AUTO,
-	REMOTE
+	MANUAL,
+	REMOTE,
+	ANCHOR,
+	CRUISE
 };
 
 enum ArmDisarm {
