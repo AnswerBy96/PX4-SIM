@@ -1,0 +1,172 @@
+module_name: Boat control
+
+parameters:
+    - group: Boat control
+      definitions:
+        OB_HEADING_KP:
+            description:
+                short: Kp Gain for the heading controller
+                long: Kp Gain for the heading controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.5
+
+        OB_HEADING_KI:
+            description:
+                short: Ki Gain for the heading controller
+                long: Ki Gain for the heading controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_HEADING_KD:
+            description:
+                short: Kd Gain for the heading controller
+                long: Kd Gain for the heading controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_SPEED_KP:
+            description:
+                short: Kp Gain for the speed controller
+                long: Kp Gain for the speed controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.5
+
+        OB_SPEED_KI:
+            description:
+                short: Ki Gain for the speed controller
+                long: Ki Gain for the speed controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_SPEED_KD:
+            description:
+                short: Kd Gain for the speed controller
+                long: Kd Gain for the speed controller
+            type: float
+            min: 0.0
+            max: 100
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_HEADING_SP:
+            description:
+                short: SetPoint for heading (0 is North)
+                long: SetPoint for heading (0 is North)
+            type: float
+            unit: rad
+            min: -3.14
+            max: 3.14
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_X_POS_SP:
+            description:
+                short:  SetPoint for X axis position (in NED)
+                long: SetPoint for X axis position (in NED)
+            type: float
+            unit: m
+            min: -100.0
+            max: 100.0
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_Y_POS_SP:
+            description:
+                short: SetPoint for Y axis position (in NED)
+                long: SetPoint for Y axis position (in NED)
+            type: float
+            unit: m
+            min: -100.0
+            max: 100.0
+            increment: 0.001
+            decimal: 3
+            default: 0.0
+
+        OB_THRUST_SCAL:
+            description:
+                short: Scaling factor for thrust
+                long: Scaling factor for thrust
+            type: float
+            min: 0.0
+            max: 10
+            increment: 0.001
+            decimal: 3
+            default: 1.0
+
+        OB_TORQUE_SCAL:
+            description:
+                short: Scaling factor for torque
+                long: Scaling factor for torque
+            type: float
+            min: 0.0
+            max: 10
+            increment: 0.001
+            decimal: 3
+            default: 1.0
+
+        OB_MAX_SPEED:
+            description:
+                short: Maximum speed the boat can drive
+                long: This parameter is used to map desired speeds to normalized motor commands.
+            type: float
+            unit: m/s
+            min: 0
+            max: 100
+            increment: 0.01
+            decimal: 2
+            default: 1
+
+        OB_ACCEPT_RADIUS:
+            description:
+                short: Position control acceptable radius
+            type: float
+            unit: m
+            min: 0
+            max: 100
+            increment: 0.01
+            decimal: 2
+            default: 1
+
+        OB_SPEED_GAIN:
+            description:
+                short: Position control system desired speed  p controller gain.
+            type: float
+            min: 0
+            max: 100
+            increment: 0.01
+            decimal: 2
+            default: 0.5
+
+        OB_STOP_MIN_DIST:
+            description:
+                short: minimal distance to goal waypoint.
+            type: float
+            unit: m
+            min: 0
+            max: 100
+            increment: 0.01
+            decimal: 2
+            default: 4

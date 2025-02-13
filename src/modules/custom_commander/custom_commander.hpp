@@ -32,24 +32,9 @@
 #include <uORB/topics/offboard_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/mavlink_log.h>
+#include <uORB/topics/mission_result.h>
 
 using namespace time_literals;
-
-enum Gear {
-	GEAR_P = 0,
-	GEAR_N = 1,
-	GEAR_R = 2,
-	GEAR_D = 3
-};
-
-enum DriveMode {
-	IDLE = 0,
-	AUTO,
-	MANUAL,
-	REMOTE,
-	ANCHOR,
-	CRUISE
-};
 
 enum ArmDisarm {
 	DISARM=0,
@@ -104,6 +89,7 @@ private:
 	vehicle_command_s _vehicle_command{};
 	offboard_control_mode_s _offboard_control_mode{};
 	vehicle_status_s _status;
+	mission_result_s _mission_result{};
 
 
 
@@ -121,6 +107,7 @@ private:
 	uORB::Subscription _ui2px4_ignition_sub{ORB_ID(ui_to_px4_ignition)};
 	uORB::Subscription _ui2px4_mode_sub{ORB_ID(ui_to_px4_mode)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
+	uORB::Subscription _mission_result_sub{ORB_ID(mission_result)};
 	// uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	//Publication

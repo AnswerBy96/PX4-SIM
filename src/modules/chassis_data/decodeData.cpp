@@ -49,13 +49,13 @@ void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 	switch (data[1])
 	{
 		case 0x00:	//P挡
-			chassisData.gear_right = 0;
+			chassisData.gear_right = chassis_data_s::GEAR_P;
 			break;
 		case 0x08:	//R挡
-			chassisData.gear_right = 2;
+			chassisData.gear_right = chassis_data_s::GEAR_R;
 			break;
 		case 0x01:	//D挡
-			chassisData.gear_right = 3;
+			chassisData.gear_right = chassis_data_s::GEAR_D;
 			break;
 		default:
 			break;
@@ -64,13 +64,13 @@ void ChassisData::decodeThrottle_SMC180(unsigned char *data)
 	switch (data[2])
 	{
 		case 0x00:	//P挡
-			chassisData.gear_left = 0;
+			chassisData.gear_left = chassis_data_s::GEAR_P;
 			break;
 		case 0x08:	//R挡
-			chassisData.gear_left = 2;
+			chassisData.gear_left = chassis_data_s::GEAR_R;
 			break;
 		case 0x01:	//D挡
-			chassisData.gear_left = 3;
+			chassisData.gear_left = chassis_data_s::GEAR_D;
 			break;
 		default:
 			break;

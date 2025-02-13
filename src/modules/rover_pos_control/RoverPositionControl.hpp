@@ -49,6 +49,7 @@
 #include <lib/mathlib/mathlib.h>
 #include <lib/perf/perf_counter.h>
 #include <lib/pid/pid.h>
+#include <lib/pure_pursuit/PurePursuit.hpp>
 #include <px4_platform_common/px4_config.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/posix.h>
@@ -178,9 +179,12 @@ private:
 	} _velocity_frame{VelocityFrame::NED};
 
 	enum DriveMode {
-		MANUAL = 0,
+		IDLE = 0,
 		AUTO,
-		REMOTE
+		MANUAL,
+		REMOTE,
+		ANCHOR,
+		CRUISE
 	};
 
 	enum Gear {

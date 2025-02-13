@@ -4,10 +4,10 @@ CustomCommander::CustomCommander() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
 {
-	_custom_commander.current_gear = GEAR_P;
+	_custom_commander.current_gear = chassis_data_s::GEAR_P;
 	_custom_commander.target_steeringwheel = 0.0f;
 	_custom_commander.target_throttle = 0.0f;
-	_custom_commander.drive_mode = MANUAL;				//默认手动驾驶模式
+	_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_MANUAL;				//默认手动驾驶模式
 }
 
 CustomCommander::~CustomCommander()
@@ -25,29 +25,29 @@ void CustomCommander::gear_commander()
 {
 	if( _chassis_data.gear_left != _chassis_data.gear_right)
 	{
-		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.current_gear = chassis_data_s::GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error | 0x01;	//两个档位不匹配
 		_custom_commander.target_steeringwheel = 0.0f;
 		_custom_commander.target_throttle = 0.0f;
 		return;
 	}
-	else if(_chassis_data.gear_left == GEAR_P || _chassis_data.gear_right == GEAR_P)
+	else if(_chassis_data.gear_left == chassis_data_s::GEAR_P || _chassis_data.gear_right == chassis_data_s::GEAR_P)
 	{
-		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.current_gear = chassis_data_s::GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		_custom_commander.target_steeringwheel = 0.0f;
 		_custom_commander.target_throttle = 0.0f;
 		return;
 	}
-	else if(_chassis_data.gear_left == GEAR_D && _chassis_data.gear_right == GEAR_D)
+	else if(_chassis_data.gear_left == chassis_data_s::GEAR_P && _chassis_data.gear_right == chassis_data_s::GEAR_P)
 	{
-		_custom_commander.current_gear = GEAR_D;
+		_custom_commander.current_gear = chassis_data_s::GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
-	else if(_chassis_data.gear_left == GEAR_R && _chassis_data.gear_right == GEAR_R)
+	else if(_chassis_data.gear_left == chassis_data_s::GEAR_P && _chassis_data.gear_right == chassis_data_s::GEAR_P)
 	{
-		_custom_commander.current_gear = GEAR_R;
+		_custom_commander.current_gear = chassis_data_s::GEAR_P;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
@@ -148,7 +148,7 @@ void CustomCommander::into_offboard_mode()
 {
 	// offboard mode
 	uint8_t offboard_count = 0;
-	if(_custom_commander.system_start && _custom_commander.drive_mode == MANUAL)
+	if(_custom_commander.system_start && _custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_MANUAL)
 	{
 		while (!should_exit())
 		{
@@ -191,7 +191,7 @@ bool CustomCommander::safety_check()
 bool CustomCommander::init()
 {
 	// alternatively, Run on fixed interval
-	ScheduleOnInterval(10000_us); // 10000 us interval, 100 Hz rate
+	ScheduleOnInterval(50000_us); // 10000 us interval, 100 Hz rate
 
 	return true;
 }
@@ -207,7 +207,6 @@ void CustomCommander::Run()
 	if(_ui2px4_ignition_sub.update(&_ui2px4_ignition))
 	{
 		_custom_commander.system_start = _ui2px4_ignition.control_start_stop;
-		// PX4_INFO("_custom_commander.system_start : %d",_custom_commander.system_start);
 	}
 
 	if(_custom_commander.system_start == true)	//总开关打开后才执行以下动作
@@ -215,59 +214,66 @@ void CustomCommander::Run()
 		if(_chassis_data_sub.update(&_chassis_data))	//获取档位、油门、方向盘等传感器数据
 		{
 			gear_commander();		//判断当前档位
-			if(_custom_commander.current_gear == GEAR_D || _custom_commander.current_gear == GEAR_R)
+			if(_custom_commander.current_gear == chassis_data_s::GEAR_D || _custom_commander.current_gear == chassis_data_s::GEAR_R)
 			{
 				cal_throttle_sheeringwheel();		//计算油门和转向
 			}
 		}
+
 		if(_ui2px4_mode_sub.update(&_ui2px4_mode))
 		{
-			//PX4_INFO("_ui2px4_mode : %d",_ui2px4_mode.mode);
 			_vehicle_status_sub.update(&_status);
 			switch (_ui2px4_mode.mode)
 			{
-				case MANUAL:
+				case custom_commander_s::DRIVE_MODE_MANUAL:
+					//切换为MANUAL模式
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_MANUAL;
 					events::send(events::ID("drive_mode_manual"),
 					{events::Log::Info, events::LogInternal::Info},
 					"current drive_mode : manual");
-					_custom_commander.drive_mode = MANUAL;
-					into_offboard_mode();	//MANUAL模式时进入offboard模式
+					//into_offboard_mode();	//MANUAL模式时进入offboard模式
 					break;
-				case AUTO:
-					_custom_commander.drive_mode = AUTO;
+				case custom_commander_s::DRIVE_MODE_AUTO:
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_AUTO;
 					events::send(events::ID("drive_mode_auto"),
 					{events::Log::Info, events::LogInternal::Info},
 					"current drive_mode : auto");
 					break;
-				case REMOTE:
-					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);		//切换为MANUAL模式
+				case custom_commander_s::DRIVE_MODE_REMOTE:
+					//切换为MANUAL模式
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_MANUAL);
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
-					//if((_status.nav_state==vehicle_status_s::NAVIGATION_STATE_MANUAL)&&(_status.arming_state==vehicle_status_s::ARMING_STATE_ARMED))
-					//{
-						_custom_commander.drive_mode = REMOTE;
-						events::send(events::ID("drive_mode_remote"),
-						{events::Log::Info, events::LogInternal::Info},
-						"current drive_mode : remote");
-						break;
-					//}
-					//break;
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_REMOTE;
+					events::send(events::ID("drive_mode_remote"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : remote");
+					break;
 				default:
 					break;
 			}
 		}
+
+		if(_mission_result_sub.update(& _mission_result) && _custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_AUTO){
+			if(_mission_result.valid == true){
+				//切换为MISSION模式
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
+				publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+			}
+		}
 	}
 	else{
-		_custom_commander.current_gear = GEAR_P;
+		_custom_commander.current_gear = chassis_data_s::GEAR_P;
 		_custom_commander.target_steeringwheel = 0.0f;
 		_custom_commander.target_throttle = 0.0f;
-		_custom_commander.drive_mode = MANUAL;				//默认手动驾驶模式
+		_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_MANUAL;				//默认手动驾驶模式
 		publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);	//加锁,param2需要为21196才会跳过预检查
 	}
 	_custom_commander.timestamp = hrt_absolute_time();
 	_custom_commander_pub.publish(_custom_commander);
 
 }
-
 int CustomCommander::task_spawn(int argc, char *argv[])
 {
 	CustomCommander *instance = new CustomCommander();

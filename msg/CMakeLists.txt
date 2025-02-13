@@ -213,6 +213,7 @@ set(msg_files
 	ui_to_px4_ignition.msg
 	px4_to_plc.msg
 	plc_to_px4.msg
+	boat_guidance_status.msg
 )
 
 if(NOT px4_constrained_flash_build)

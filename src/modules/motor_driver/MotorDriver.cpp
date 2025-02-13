@@ -65,11 +65,11 @@ void MotorDriver::Run()
 
 	custom_commander_sub.update(&custom_commander_);
 
-	if(((custom_commander_.drive_mode == DriveMode::MANUAL&&
-	(custom_commander_.current_gear == Gear::GEAR_D )||
-	(custom_commander_.current_gear == Gear::GEAR_R )) ||
-	(custom_commander_.drive_mode == DriveMode::REMOTE) ||
-	(custom_commander_.drive_mode == DriveMode::AUTO)) && (actuator_motors_sub.update(&actuator_motors_)))
+	if(((custom_commander_.drive_mode == custom_commander_s::DRIVE_MODE_MANUAL&&
+	(custom_commander_.current_gear == chassis_data_s::GEAR_D )||
+	(custom_commander_.current_gear == chassis_data_s::GEAR_R )) ||
+	(custom_commander_.drive_mode == custom_commander_s::DRIVE_MODE_REMOTE) ||
+	(custom_commander_.drive_mode == custom_commander_s::DRIVE_MODE_AUTO)) && (actuator_motors_sub.update(&actuator_motors_)))
 	{
 		//(-1,1) -> (-1000,1000)
 		motor1_pwm_ = actuator_motors_.control[0] * 1000;

@@ -1,4 +1,10 @@
 uint64 timestamp		# time since system start (microseconds)
+uint8 DRIVE_MODE_IDLE = 0
+uint8 DRIVE_MODE_AUTO = 1
+uint8 DRIVE_MODE_MANUAL = 2
+uint8 DRIVE_MODE_REMOTE = 3
+uint8 DRIVE_MODE_ANCHOR = 4
+uint8 DRIVE_MODE_CRUISE = 5
 uint8  current_gear					#vehicle gear
 float32 target_throttle					# [-1 , 1]
 float32 target_steeringwheel			# [-1 , 1]

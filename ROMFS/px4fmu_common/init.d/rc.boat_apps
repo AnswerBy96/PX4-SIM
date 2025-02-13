@@ -23,7 +23,8 @@ fi
 #
 # Start attitude controllers.
 #
-rover_pos_control start
+#rover_pos_control start
+boat_control start
 
 
 #
