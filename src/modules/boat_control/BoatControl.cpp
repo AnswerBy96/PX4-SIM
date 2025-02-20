@@ -110,6 +110,8 @@ void BoatControl::updateSubscriptions()
 	if (_position_setpoint_triplet_sub.updated()) {
 		updateWaypoints();
 	}
+
+	if (_custom_commander_sub.update(&_custom_commander)) ;
 }
 
 void BoatControl::updateWaypoints()
@@ -170,57 +172,51 @@ float BoatControl::heading_control(float target_heading){
 
 void BoatControl::manual_control()
 {
-	if(_custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_MANUAL){
-		float desireSpeed = 0.0f;
-		switch (_custom_commander.current_gear)
-		{
-			case chassis_data_s::GEAR_P:
-				// Set heading from the manual roll input channel
-				_torque_setpoint_z = 0.0f;
-				// Set throttle from the manual throttle channel
-				_thrust_setpoint_x = 0.0f;
-				_thrust_setpoint_y = 0.0f;
-				break;
-			case chassis_data_s::GEAR_D:
-				// Set heading from the manual roll input channel
-				_torque_setpoint_z = _custom_commander.target_steeringwheel;
-				// Set throttle from the manual throttle channel
-				desireSpeed = _custom_commander.target_throttle * _param_ob_max_speed.get();
-				_thrust_setpoint_x += speed_control(desireSpeed);//速度控制
-				_thrust_setpoint_x = (_thrust_setpoint_x < -1.0f) ? -1.0f : ((_thrust_setpoint_x > 1.0f) ? 1.0f : _thrust_setpoint_x);
-				break;
-			case chassis_data_s::GEAR_R:
-				/* code */
-				break;
-			default:
-				break;
-		}
+	float desireSpeed = 0.0f;
+	switch (_custom_commander.current_gear)
+	{
+		case chassis_data_s::GEAR_P:
+			// Set heading from the manual roll input channel
+			_torque_setpoint_z = 0.0f;
+			// Set throttle from the manual throttle channel
+			_thrust_setpoint_x = 0.0f;
+			_thrust_setpoint_y = 0.0f;
+			break;
+		case chassis_data_s::GEAR_D:
+			// Set heading from the manual roll input channel
+			_torque_setpoint_z = _custom_commander.target_steeringwheel;
+			// Set throttle from the manual throttle channel
+			desireSpeed = _custom_commander.target_throttle * _param_ob_max_speed.get();
+			_thrust_setpoint_x += speed_control(desireSpeed);//速度控制
+			_thrust_setpoint_x = (_thrust_setpoint_x < -1.0f) ? -1.0f : ((_thrust_setpoint_x > 1.0f) ? 1.0f : _thrust_setpoint_x);
+			break;
+		case chassis_data_s::GEAR_R:
+			/* code */
+			break;
+		default:
+			break;
 	}
 }
 
 void BoatControl::remote_control()
 {
-	//if( _custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_REMOTE){
-		if (_control_mode.flag_control_manual_enabled) {
-			manual_control_setpoint_s manual_control_setpoint_;
-			if (_manual_control_setpoint_sub.copy(&manual_control_setpoint_)) {
-				// Set heading from the manual roll input channel
-				// _torque_setpoint_z = manual_control_setpoint_.y; // Nominally yaw: _manual_control_setpoint.r;
-				// // Set throttle from the manual throttle channel
-				// _thrust_setpoint_x = manual_control_setpoint_.z;
-				// _thrust_setpoint_y = 0.0;
+	manual_control_setpoint_s manual_control_setpoint_;
+	if (_manual_control_setpoint_sub.copy(&manual_control_setpoint_)) {
+		// Set heading from the manual roll input channel
+		// _torque_setpoint_z = manual_control_setpoint_.y; // Nominally yaw: _manual_control_setpoint.r;
+		// // Set throttle from the manual throttle channel
+		// _thrust_setpoint_x = manual_control_setpoint_.z;
+		// _thrust_setpoint_y = 0.0;
 
-				float speed_delta_u = speed_control(_max_speed * manual_control_setpoint_.z);
+		float speed_delta_u = speed_control(_max_speed * manual_control_setpoint_.z);
 
-				_thrust_setpoint_x += speed_delta_u;
+		_thrust_setpoint_x += speed_delta_u;
 
-				_thrust_setpoint_x = (_thrust_setpoint_x < -1.0f) ? -1.0f : ((_thrust_setpoint_x > 1.0f) ? 1.0f : _thrust_setpoint_x);
-				_thrust_setpoint_y = 0.0f;
-				_torque_setpoint_z = manual_control_setpoint_.y; // Nominally yaw: _manual_control_setpoint.r;
+		_thrust_setpoint_x = (_thrust_setpoint_x < -1.0f) ? -1.0f : ((_thrust_setpoint_x > 1.0f) ? 1.0f : _thrust_setpoint_x);
+		_thrust_setpoint_y = 0.0f;
+		_torque_setpoint_z = manual_control_setpoint_.y; // Nominally yaw: _manual_control_setpoint.r;
 
-			}
-		}
-	//}
+	}
 }
 
 void BoatControl::position_control()
@@ -469,8 +465,12 @@ void BoatControl::Run()
 			case vehicle_status_s::NAVIGATION_STATE_MANUAL:
 				// Manual mode
 				// directly produce setpoints from the manual control setpoint (joystick)
-				//manual_control();
-				remote_control();
+				if(_custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_MANUAL){
+					manual_control();
+				}
+				else if(_custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_REMOTE){
+					remote_control();
+				}
 				break;
 			case vehicle_status_s::NAVIGATION_STATE_POSCTL:
 				position_control();
@@ -488,8 +488,12 @@ void BoatControl::Run()
 				break;
 		}
 
-		publish_control_setpoint();
 	}
+	if(_custom_commander.drive_mode == custom_commander_s::DRIVE_MODE_IDLE){
+		_thrust_setpoint_x = 0.0f;
+		_torque_setpoint_z = 0.0f;
+	}
+	publish_control_setpoint();
 
 }
 

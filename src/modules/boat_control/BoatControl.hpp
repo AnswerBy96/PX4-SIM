@@ -9,7 +9,6 @@
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/topics/manual_control_setpoint.h>
-#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/actuator_controls_status.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
@@ -91,7 +90,6 @@ private:
 
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _parameter_update_sub{ORB_ID(parameter_update)};
-	uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _vehicle_local_pos_setpoint_sub{ORB_ID(vehicle_local_position_setpoint)};
@@ -131,7 +129,6 @@ private:
 	vehicle_local_position_setpoint_s _vehicle_local_pos_setpoint{};
 	vehicle_local_position_s _vehicle_local_pos{};
 	vehicle_status_s _vehicle_status{};
-	vehicle_control_mode_s _control_mode;
 	boat_guidance_status_s _boat_guidance_status;
 	hrt_abstime _time_stamp_last{0}; /**< time stamp when task was last updated */
 

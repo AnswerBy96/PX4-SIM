@@ -39,15 +39,15 @@ void CustomCommander::gear_commander()
 		_custom_commander.target_throttle = 0.0f;
 		return;
 	}
-	else if(_chassis_data.gear_left == chassis_data_s::GEAR_P && _chassis_data.gear_right == chassis_data_s::GEAR_P)
+	else if(_chassis_data.gear_left == chassis_data_s::GEAR_D && _chassis_data.gear_right == chassis_data_s::GEAR_D)
 	{
-		_custom_commander.current_gear = chassis_data_s::GEAR_P;
+		_custom_commander.current_gear = chassis_data_s::GEAR_D;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
-	else if(_chassis_data.gear_left == chassis_data_s::GEAR_P && _chassis_data.gear_right == chassis_data_s::GEAR_P)
+	else if(_chassis_data.gear_left == chassis_data_s::GEAR_R && _chassis_data.gear_right == chassis_data_s::GEAR_R)
 	{
-		_custom_commander.current_gear = chassis_data_s::GEAR_P;
+		_custom_commander.current_gear = chassis_data_s::GEAR_R;
 		_custom_commander.system_error = _custom_commander.system_error & 0xFE;
 		return;
 	}
@@ -250,7 +250,21 @@ void CustomCommander::Run()
 					{events::Log::Info, events::LogInternal::Info},
 					"current drive_mode : remote");
 					break;
+				case custom_commander_s::DRIVE_MODE_IDLE:
+					//加锁,param2需要为21196才会跳过预检查
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_IDLE;
+					events::send(events::ID("drive_mode_idle"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : idle");
+					break;
 				default:
+					//加锁,param2需要为21196才会跳过预检查
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_IDLE;
+					events::send(events::ID("unkown_mode"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : unkown");
 					break;
 			}
 		}
