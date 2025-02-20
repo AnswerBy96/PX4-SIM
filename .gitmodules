@@ -1,6 +1,6 @@
 [submodule "src/modules/mavlink/mavlink"]
 	path = src/modules/mavlink/mavlink
-	url = git@github.com:DaShen96/mavlink.git
+	url = https://github.com/DaShen96/mavlink
 	branch = master
 [submodule "src/drivers/uavcan/libuavcan"]
 	path = src/drivers/uavcan/libuavcan
