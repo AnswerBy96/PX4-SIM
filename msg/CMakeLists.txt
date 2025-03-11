@@ -211,6 +211,7 @@ set(msg_files
 	px4_to_ui.msg
 	ui_to_px4_mode.msg
 	ui_to_px4_ignition.msg
+	ui_to_px4_cruiseparam.msg
 	px4_to_plc.msg
 	plc_to_px4.msg
 	boat_guidance_status.msg

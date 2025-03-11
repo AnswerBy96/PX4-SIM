@@ -250,6 +250,15 @@ void CustomCommander::Run()
 					{events::Log::Info, events::LogInternal::Info},
 					"current drive_mode : remote");
 					break;
+				case custom_commander_s::DRIVE_MODE_CRUISE:
+					//定速定向巡航
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_ACRO);
+					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, ARM);	//解锁
+					_custom_commander.drive_mode = custom_commander_s::DRIVE_MODE_CRUISE;
+					events::send(events::ID("drive_mode_cruise"),
+					{events::Log::Info, events::LogInternal::Info},
+					"current drive_mode : cruise");
+					break;
 				case custom_commander_s::DRIVE_MODE_IDLE:
 					//加锁,param2需要为21196才会跳过预检查
 					publish_vehicle_command(vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM, DISARM , 21196.f);

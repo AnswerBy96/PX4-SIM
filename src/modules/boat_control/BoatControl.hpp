@@ -14,6 +14,7 @@
 #include <uORB/topics/vehicle_torque_setpoint.h>
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 
+
 #include <uORB/topics/mission_result.h>
 #include <uORB/topics/home_position.h>
 #include <uORB/topics/position_setpoint_triplet.h>
@@ -26,6 +27,7 @@
 #include <uORB/topics/boat_guidance_status.h>
 #include <uORB/topics/chassis_data.h>
 #include <uORB/topics/custom_commander.h>
+#include <uORB/topics/ui_to_px4_cruiseparam.h>
 
 #include <lib/pid/pid.h>
 #include <matrix/matrix/math.hpp>
@@ -78,6 +80,8 @@ private:
 
 	void auto_return();
 
+	void cruise_control(float target_speed , float target_heading);
+
 	float heading_control(float target_heading);
 
 	float speed_control(float target_speed);
@@ -102,6 +106,7 @@ private:
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _custom_commander_sub{ORB_ID(custom_commander)};
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
+	uORB::Subscription _ui_to_px4_cruiseparam_sub{ORB_ID(ui_to_px4_cruiseparam)};
 
 	// Add Publications for control allocator
 	uORB::Publication<actuator_controls_status_s> _actuator_controls_status_pub{ORB_ID(actuator_controls_status_0)};
@@ -130,6 +135,7 @@ private:
 	vehicle_local_position_s _vehicle_local_pos{};
 	vehicle_status_s _vehicle_status{};
 	boat_guidance_status_s _boat_guidance_status;
+	ui_to_px4_cruiseparam_s _ui_to_px4_cruiseparam;
 	hrt_abstime _time_stamp_last{0}; /**< time stamp when task was last updated */
 
 	// PID heading controller

@@ -112,6 +112,8 @@ void BoatControl::updateSubscriptions()
 	}
 
 	if (_custom_commander_sub.update(&_custom_commander)) ;
+
+	if (_ui_to_px4_cruiseparam_sub.update(&_ui_to_px4_cruiseparam));
 }
 
 void BoatControl::updateWaypoints()
@@ -422,6 +424,34 @@ void BoatControl::auto_return()
 
 }
 
+void BoatControl::cruise_control(float target_speed , float target_heading)
+{
+	const float desired_heading = target_heading * M_PI / 180.0f;
+	float desired_speed = target_speed * 0.44704;
+	float heading_error = desired_heading - _vehicle_yaw;
+
+	if(heading_error < -M_PI){
+		heading_error = heading_error + 2 * M_PI;
+	}
+	if(heading_error > M_PI){
+		heading_error = heading_error - 2 * M_PI;
+	}
+
+	float k_speed = 1 / (1 + fabsf(heading_error) * _param_ob_speed_gain.get());
+
+	desired_speed = k_speed * desired_speed;
+
+	_thrust_setpoint_x += speed_control(desired_speed);
+	_thrust_setpoint_x = (_thrust_setpoint_x < -1.0f) ? -1.0f : ((_thrust_setpoint_x > 1.0f) ? 1.0f : _thrust_setpoint_x);
+	_thrust_setpoint_y = 0.0f;
+
+	hrt_abstime now = hrt_absolute_time();
+	const float dt = math::min((now - _time_stamp_last), 5000_ms) / 1e3f;
+	_torque_setpoint_z = pid_calculate(&_head_pid, desired_heading , _vehicle_yaw , 0.0 , dt);
+	_torque_setpoint_z = (_torque_setpoint_z < -1.0f) ? -1.0f : ((_torque_setpoint_z > 1.0f) ? 1.0f : _torque_setpoint_z);
+
+}
+
 void BoatControl::publish_control_setpoint()
 {
 	vehicle_thrust_setpoint_s v_thrust_sp{};
@@ -477,6 +507,9 @@ void BoatControl::Run()
 				break;
 			case vehicle_status_s::NAVIGATION_STATE_AUTO_RTL:
 				auto_return();
+				break;
+			case vehicle_status_s::NAVIGATION_STATE_ACRO:
+				cruise_control(_ui_to_px4_cruiseparam.target_speed , _ui_to_px4_cruiseparam.target_heading);
 				break;
 			case vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION:
 				mission_control();
