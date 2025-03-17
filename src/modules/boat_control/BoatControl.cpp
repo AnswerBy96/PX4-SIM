@@ -275,6 +275,33 @@ void  BoatControl::mission_control()
 	if (_mission_result_sub.updated()) {
 		_mission_result_sub.copy(&mission_result);
 	}
+	if(_ui_to_px4_missionstate_sub.update(&_ui_to_px4_missionstate))
+	{
+		MissionRequest MissionCurrentState = static_cast<MissionRequest>(_ui_to_px4_missionstate.mission_state);
+		switch(MissionCurrentState)
+		{
+			case MissionRequest::MISSION_PAUSE:
+				if(_guid_state == GOTO_WAYPOINT)
+				{
+					_guid_state = PAUSED;
+				}
+				break;
+			case MissionRequest::MISSION_RESUME:
+				if(_guid_state == PAUSED)
+				{
+					float dist_between_waypoints = get_distance_to_next_waypoint((double)_prev_wp(0), (double)_prev_wp(1),
+							(double)_curr_wp(0), (double)_curr_wp(1));
+                			if (dist_between_waypoints > 0)
+					{
+                    				_guid_state = GOTO_WAYPOINT;
+                    				// 重置PID防止积分累积
+                    				pid_reset_integral(&_head_pid);
+                			}
+				}
+				break;
+		}
+
+	}
 
 	float dist_to_curr_wp = distance_point_to_point(_curr_pos_ned , _curr_wp_ned);
 	if(dist_to_curr_wp < _stop_min_dist || mission_result.finished == true){
@@ -335,6 +362,13 @@ void  BoatControl::mission_control()
 		_boat_guidance_status.desired_speed = desired_speed;
 		_boat_guidance_status.actual_speed = _vehicle_forward_speed;
 		_boat_guidance_status.speed_error = desired_speed - _vehicle_forward_speed;
+	}
+	else if(_guid_state == PAUSED)
+	{
+		// 暂停状态处理
+        	_thrust_setpoint_x = 0.0f;
+        	_thrust_setpoint_y = 0.0f;
+        	_torque_setpoint_z = 0.0f;
 	}
 	else{
 		_heading_pid.reset();

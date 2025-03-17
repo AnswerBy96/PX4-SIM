@@ -28,6 +28,7 @@
 #include <uORB/topics/chassis_data.h>
 #include <uORB/topics/custom_commander.h>
 #include <uORB/topics/ui_to_px4_cruiseparam.h>
+#include <uORB/topics/ui_to_px4_missionstate.h>
 
 #include <lib/pid/pid.h>
 #include <matrix/matrix/math.hpp>
@@ -107,6 +108,7 @@ private:
 	uORB::Subscription _custom_commander_sub{ORB_ID(custom_commander)};
 	uORB::Subscription _chassis_data_sub{ORB_ID(chassis_data)};
 	uORB::Subscription _ui_to_px4_cruiseparam_sub{ORB_ID(ui_to_px4_cruiseparam)};
+	uORB::Subscription _ui_to_px4_missionstate_sub{ORB_ID(ui_to_px4_missionstate)};
 
 	// Add Publications for control allocator
 	uORB::Publication<actuator_controls_status_s> _actuator_controls_status_pub{ORB_ID(actuator_controls_status_0)};
@@ -116,8 +118,15 @@ private:
 
 	enum GuidState{
 		STOPPING = 0,
-		GOTO_WAYPOINT = 1
+		GOTO_WAYPOINT = 1,
+		PAUSED
 	}_guid_state{STOPPING};
+
+	enum class MissionRequest{
+		MISSION_PAUSE  = 0,
+		MISSION_RESUME = 1
+	};
+
 
 	matrix::Quatf _vehicle_attitude_quaternion{};
 	float _vehicle_yaw_rate{0.f};
@@ -136,6 +145,9 @@ private:
 	vehicle_status_s _vehicle_status{};
 	boat_guidance_status_s _boat_guidance_status;
 	ui_to_px4_cruiseparam_s _ui_to_px4_cruiseparam;
+	ui_to_px4_missionstate_s _ui_to_px4_missionstate;
+
+
 	hrt_abstime _time_stamp_last{0}; /**< time stamp when task was last updated */
 
 	// PID heading controller

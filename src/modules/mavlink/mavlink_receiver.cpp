@@ -116,6 +116,9 @@ void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
+	case MAVLINK_MSG_ID_UI_TO_PX4_MISSIONSTATE:
+		handle_message_ui_to_px4_missionstate(msg);
+		break;
 	case MAVLINK_MSG_ID_UI_TO_PX4_CRUISEPARAM:
 		handle_message_ui_to_px4_cruiseparam(msg);
 		break;
@@ -3131,6 +3134,21 @@ MavlinkReceiver::handle_message_ui_to_px4_cruiseparam(mavlink_message_t *msg)
 
 	_eboat_mavlink_cruiseparam_pub.publish(_ui_to_px4_cruiseparam);
 
+}
+
+void
+MavlinkReceiver::handle_message_ui_to_px4_missionstate(mavlink_message_t *msg)
+{
+	mavlink_ui_to_px4_missionstate_t ui_to_px4_missionstate_msg;
+	mavlink_msg_ui_to_px4_missionstate_decode(msg,&ui_to_px4_missionstate_msg);
+	ui_to_px4_missionstate_s _ui_to_px4_missionstate;
+
+	_ui_to_px4_missionstate.timestamp = hrt_absolute_time();
+	_ui_to_px4_missionstate.mission_state = ui_to_px4_missionstate_msg.mission_state;
+
+
+	PX4_INFO("_ui_to_px4_missionstate : %d",_ui_to_px4_missionstate.mission_state);
+	_eboat_mavlink_missionstate_pub.publish(_ui_to_px4_missionstate);
 }
 
 void

@@ -112,6 +112,7 @@
 #include <uORB/topics/ui_to_px4_ignition.h>
 #include <uORB/topics/ui_to_px4_mode.h>
 #include <uORB/topics/ui_to_px4_cruiseparam.h>
+#include <uORB/topics/ui_to_px4_missionstate.h>
 
 #if !defined(CONSTRAINED_FLASH)
 # include <uORB/topics/debug_array.h>
@@ -157,6 +158,8 @@ private:
 
 	void handle_message(mavlink_message_t *msg);
 
+
+	void handle_message_ui_to_px4_missionstate(mavlink_message_t *msg);
 	void handle_message_ui_to_px4_cruiseparam(mavlink_message_t *msg);
 	void handle_message_ui_to_px4_ignition(mavlink_message_t *msg);
 	void handle_message_ui_to_px4_mode(mavlink_message_t *msg);
@@ -352,6 +355,8 @@ private:
 	uORB::Publication<ui_to_px4_mode_s>       _eboat_mavlink_mode_pub{ORB_ID(ui_to_px4_mode)};
 	uORB::Publication<ui_to_px4_ignition_s>   _eboat_mavlink_ignition_pub{ORB_ID(ui_to_px4_ignition)};
 	uORB::Publication<ui_to_px4_cruiseparam_s>   _eboat_mavlink_cruiseparam_pub{ORB_ID(ui_to_px4_cruiseparam)};
+	uORB::Publication<ui_to_px4_missionstate_s>   _eboat_mavlink_missionstate_pub{ORB_ID(ui_to_px4_missionstate)};
+
 
 	// ORB subscriptions
 	uORB::Subscription	_actuator_armed_sub{ORB_ID(actuator_armed)};
